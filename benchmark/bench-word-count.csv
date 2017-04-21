@@ -1,0 +1,20 @@
+input,version,time
+bench-data/wiki-sample-500000.txt, 4, 25026
+bench-data/wiki-sample-500000.txt, 3, 29736
+bench-data/wiki-sample-500000.txt, 2, 29648
+bench-data/wiki-sample-500000.txt, 1, 270119
+bench-data/wiki-sample-500000.txt, 2, 30585
+bench-data/wiki-sample-500000.txt, 2, 28222
+bench-data/wiki-sample-500000.txt, 2, 27724
+bench-data/wiki-sample-500000.txt, 2, 28029
+bench-data/wiki-sample-500000.txt, 2, 27859
+bench-data/wiki-sample-500000.txt, 3, 24712
+bench-data/wiki-sample-500000.txt, 3, 26649
+bench-data/wiki-sample-500000.txt, 3, 25163
+bench-data/wiki-sample-500000.txt, 3, 26678
+bench-data/wiki-sample-500000.txt, 3, 26000
+bench-data/wiki-sample-500000.txt, 4, 23468
+bench-data/wiki-sample-500000.txt, 4, 23095
+bench-data/wiki-sample-500000.txt, 4, 22054
+bench-data/wiki-sample-500000.txt, 4, 22681
+bench-data/wiki-sample-500000.txt, 4, 24353

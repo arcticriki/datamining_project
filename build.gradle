@@ -1,0 +1,26 @@
+plugins {
+    id 'com.github.johnrengelman.shadow' version '1.2.4'
+}
+
+apply plugin: 'java'
+
+group 'it.unipd.dei'
+version '1.0-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+}
+
+jar {
+    zip64 = true
+}
+
+shadowJar {
+    zip64 = true
+}
+
+dependencies {
+    compile group: 'org.apache.spark', name: 'spark-core_2.11', version: '2.1.0'
+    compile group: 'org.apache.spark', name: 'spark-mllib_2.11', version: '2.1.0'
+    compile group: 'it.unimi.dsi', name: 'fastutil', version: '7.1.0'
+}
