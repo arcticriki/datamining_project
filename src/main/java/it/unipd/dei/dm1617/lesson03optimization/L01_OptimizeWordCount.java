@@ -105,7 +105,7 @@ public class L01_OptimizeWordCount {
 
 
   public static void main(String[] args) throws IOException {
-    int version = Integer.parseInt(args[0]);
+    int version = 1; //Integer.parseInt(args[0]);
     String path = args[1];
 
     int nTop = 100;
