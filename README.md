@@ -3,6 +3,8 @@
 This repository contains examples for the laboratory lessons for the
 2016/2017 course in Data Mining.
 
+Dataset: https://www.kaggle.com/cdc/mortality
+
 ## Requirements
 
 You will need Java 8 to run the examples and do the project. To verify
