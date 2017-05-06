@@ -8,7 +8,6 @@ import scala.Tuple2;
 public class Property extends Tuple2<Integer,String>{
 
     private String colName;
-
     private String className;
 
     public Property(int key, String value, String colName, String className){
@@ -18,7 +17,6 @@ public class Property extends Tuple2<Integer,String>{
     }
 
     public String toString(){
-        //return "(" + this.id + ", " + this._2 + ")";
         return format();
     }
 
@@ -36,9 +34,7 @@ public class Property extends Tuple2<Integer,String>{
 
     public String getClassName() { return className; }
 
-    public void setClassName(String className) {
-        this.className = className;
-    }
+    public void setClassName(String className) { this.className = className; }
 
     public int getName(){
         return this._1;
