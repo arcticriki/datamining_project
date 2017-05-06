@@ -165,7 +165,7 @@ public class testFPGrowth {
             }
         }
 
-        file = Paths.get("results/frequent-itemsets.txt");
+        file = Paths.get("results/association-rules.txt");
         try {
             Files.write(file, outputLines, Charset.forName("UTF-8"));
         }
