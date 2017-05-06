@@ -10,6 +10,11 @@ import org.apache.spark.mllib.fpm.FPGrowthModel;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
+import java.io.IOException;
+import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -115,8 +120,6 @@ public class testFPGrowth {
                         }
                 );
 
-
-
         long transactionsCount = transactions.count();
         //transactions.map(t ->  t.stream().filter(p -> !p.getValue().equals("0")).collect(Collectors.toList()));
 
@@ -131,22 +134,44 @@ public class testFPGrowth {
                 .setNumPartitions(10);
         FPGrowthModel<Property> model = fpg.run(transactions);
 
-
+        ArrayList<String> outputLines = new ArrayList<>();
         for (FPGrowth.FreqItemset<Property> itemset: model.freqItemsets().toJavaRDD().collect()) {
-            System.out.println("[" + itemset.javaItems() + "], " + ((float) itemset.freq() / (float) transactionsCount));
+            String line = "[" + itemset.javaItems() + "], " + ((float) itemset.freq() / (float) transactionsCount);
+            System.out.println(line);
+            outputLines.add(line);
+        }
+
+        // Writing output to a file
+        Path file = Paths.get("results/frequent-itemsets.txt");
+        try {
+            Files.write(file, outputLines, Charset.forName("UTF-8"));
+        }
+        catch (IOException e) {
+            e.printStackTrace();
         }
 
         long end = System.currentTimeMillis();
 
         System.out.println("[frequent itemsets] Elapsed time: " + ((end-import_data)/1000.0) + " s" );
         double minConfidence = 0.1;
+
+        outputLines.clear();
         for (AssociationRules.Rule<Property> rule
                 : model.generateAssociationRules(minConfidence).toJavaRDD().collect()) {
-            if (rule.confidence() < 0.8)
-                System.out.println(
-                        rule.javaAntecedent() + " => " + rule.javaConsequent() + ", " + rule.confidence());
+            if (rule.confidence() < 0.8) {
+                String line = rule.javaAntecedent() + " => " + rule.javaConsequent() + ", " + rule.confidence();
+                System.out.println(line);
+                outputLines.add(line);
+            }
         }
 
+        file = Paths.get("results/frequent-itemsets.txt");
+        try {
+            Files.write(file, outputLines, Charset.forName("UTF-8"));
+        }
+        catch (IOException e) {
+            e.printStackTrace();
+        }
 
     }
 
