@@ -38,6 +38,7 @@ public class testFPGrowth {
         JavaSparkContext sc = new JavaSparkContext(sparkConf);
 
         String filename = "data/DeathRecords.csv";
+        FieldDecoder fd = new FieldDecoder();
         double sampleProbability = 0.3;
         double minSup = 0.7;
 
@@ -103,8 +104,13 @@ public class testFPGrowth {
                                 }
 
                                 if (!reject)
-                                    transaction.add(new Property(i, columnName, columnContent));
+                                    transaction.add(new Property(
+                                            i,
+                                            columnContent,
+                                            fd.decodeColumn(i),
+                                            fd.decodeValue(i,columnContent)));
                             }
+
                             return transaction;
                         }
                 );

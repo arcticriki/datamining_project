@@ -1,23 +1,26 @@
 package it.unipd.dei.dm1617.death_mining;
 
+import scala.Serializable;
+
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Paths;
 import java.util.*;
 
 /**
  * Created by tonca on 06/05/17.
  */
-public class FieldDecoder {
+public class FieldDecoder implements Serializable {
 
-    List<String> columns;
-    List<Map<String, String>> colMap;
+    private List<String> columns;
+    private Map<Integer, Map<String, String>> colMap;
 
     //When an instance is created all lookup tables are loaded
     public FieldDecoder() {
 
-        colMap = new ArrayList<>();
+        colMap = new HashMap<>();
 
         try {
             String[] colNames = Files.lines(Paths.get("data/columns.csv"), StandardCharsets.UTF_8)
@@ -25,26 +28,33 @@ public class FieldDecoder {
                     .toString()
                     .split(",");
 
-            columns = new ArrayList<String>(Arrays.asList(colNames));
+            columns = new ArrayList<>(Arrays.asList(colNames));
 
-            for (String temp : columns) {
+        }
+        catch (IOException e) {
+            //e.printStackTrace();
+        }
 
-                Map<String,String> map = new HashMap<>();
 
-                Files.lines(Paths.get("data/"+temp+".csv"), StandardCharsets.UTF_8)
+        for (int i=1; i<columns.size();i++) {
+            try {
+
+                Map<String, String> map = new HashMap<>();
+
+                Files.lines(Paths.get("data/" + columns.get(i) + ".csv"), StandardCharsets.UTF_8)
                         .forEach(
                                 (line) -> {
                                     String[] row = line.split(",");
-                                    map.put(row[0],row[1]);
+                                    map.put(row[0], row[1].replace("\"", ""));
                                 }
                         );
-                colMap.add(map);
+                colMap.put(i, map);
+            }
+            catch (IOException e) {
+                //e.printStackTrace();
             }
         }
 
-        catch (IOException e) {
-            e.printStackTrace();
-        }
 
     }
 
@@ -55,21 +65,14 @@ public class FieldDecoder {
 
     public String decodeValue(int colIndex, String key) {
 
-        return colMap.get(colIndex).get(key);
+        String result;
+        try {
+            result = colMap.get(colIndex).get(key);
+        }
+        catch (NullPointerException e) {
+            result = key;
+        }
+        return result;
     }
 
 }
-
-
-/*
-for (FPGrowth.FreqItemset<Tuple2<Integer,String>> itemset: model.freqItemsets().toJavaRDD().collect()) {
-
-    List<Tuple2<String,String>> converted = new ArrayList<>();
-    itemset.javaItems().forEach(
-            (tuple) -> {
-                converted.add(new Tuple2<>(colNames[tuple._1], tuple._2));
-            }
-    );
-    System.out.println("[" + converted + "], " + itemset.freq());
-}
- */
