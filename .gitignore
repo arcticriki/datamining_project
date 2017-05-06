@@ -1,3 +1,5 @@
 .gradle/
 .idea/
 build/
+data/RecordAxisCondition.csv
+data/EntityAxisCondition.csv
