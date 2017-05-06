@@ -1,7 +1,10 @@
 package it.unipd.dei.dm1617.death_mining;
 
 
-import java.io.Serializable;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -15,6 +18,7 @@ import org.apache.spark.mllib.fpm.AssociationRules;
 import org.apache.spark.mllib.fpm.FPGrowth;
 import org.apache.spark.mllib.fpm.FPGrowthModel;
 import scala.Tuple2;
+import scala.Tuple3;
 //import org.apache.spark.sql.api.java.JavaSQLContext;
 
 /**
@@ -48,15 +52,22 @@ public class testFPGrowth {
         System.out.println("Elapsed time: "+ ((end-start)/1000.0) + " s" );
 
         FPGrowth fpg = new FPGrowth()
-                .setMinSupport(0.1)
+                .setMinSupport(0.2)
                 .setNumPartitions(10);
         FPGrowthModel<Tuple2<Integer,String>> model = fpg.run(transactions);
 
+        //Qua comincia il casino
 
+
+
+
+        //Qua finisce
+
+        /*
         for (FPGrowth.FreqItemset<Tuple2<Integer,String>> itemset: model.freqItemsets().toJavaRDD().collect()) {
             System.out.println("[" + itemset.javaItems() + "], " + itemset.freq());
         }
-
+        */
         end = System.currentTimeMillis();
 
         System.out.println("Elapsed time: "+ ((end-start)/1000.0) + " s" );
@@ -66,6 +77,8 @@ public class testFPGrowth {
             System.out.println(
                     rule.javaAntecedent() + " => " + rule.javaConsequent() + ", " + rule.confidence());
         }*/
+
+
 
 
     }

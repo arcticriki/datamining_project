@@ -1,0 +1,9 @@
+Code,Description
+1,Accident
+2,Suicide
+3,Homicide
+4,"Pending investigation"
+5,"Could not determine"
+6,Self-Inflicted
+7,Natural
+0,"Not specified"

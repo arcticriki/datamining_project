@@ -1,0 +1,12 @@
+Code,Description
+0,Home
+1,"Residential institution"
+2,"School, other institution and public administrative area"
+3,"Sports and athletics area"
+4,"Street and highway"
+5,"Trade and service area"
+6,"Industrial and construction area"
+7,Farm
+8,"Other Specified Places"
+9,"Unspecified place"
+99,"Causes other than W00-Y34, except Y06.- and Y07"
