@@ -25,19 +25,8 @@ import java.util.List;
 public class testFPGrowth {
 
     public static void main(String[] args) {
+
         long start = System.currentTimeMillis();
-
-        List<String> columns = null;
-        // read column names
-        try{
-            BufferedReader reader = new BufferedReader(new FileReader("data/columns.csv"));
-            String line = reader.readLine();
-            columns = Arrays.asList(line.split(","));
-
-        } catch (Exception e)
-        {
-            System.exit(0);
-        }
 
         SparkConf sparkConf = new SparkConf(true).setAppName("Frequent itemsets mining");
         JavaSparkContext sc = new JavaSparkContext(sparkConf);
@@ -48,7 +37,6 @@ public class testFPGrowth {
         double minSup = 0.7;
 
         System.out.println("Sampling with probability " + sampleProbability + " and importing data");
-        List<String> finalColumns = columns;
         JavaRDD<List<Property>> transactions = sc.textFile(filename)
                 .sample(false, sampleProbability)
                 .map(
@@ -57,7 +45,7 @@ public class testFPGrowth {
                             String[] fields = line.split(",");
 
                             for (int i = 0; i < fields.length; i++) {
-                                String columnName = finalColumns.get(i);
+                                String columnName = fd.decodeColumn(i);
                                 String columnContent = fields[i];
                                 boolean reject = false;
 
