@@ -8,15 +8,12 @@ import org.apache.spark.mllib.fpm.AssociationRules;
 import org.apache.spark.mllib.fpm.FPGrowth;
 import org.apache.spark.mllib.fpm.FPGrowthModel;
 
-import java.io.BufferedReader;
-import java.io.FileReader;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -34,9 +31,10 @@ public class testFPGrowth {
         String filename = "data/DeathRecords.csv";
         FieldDecoder fd = new FieldDecoder();
         double sampleProbability = 0.3;
-        double minSup = 0.7;
+        double minSup = 0.5;
 
         System.out.println("Sampling with probability " + sampleProbability + " and importing data");
+
         JavaRDD<List<Property>> transactions = sc.textFile(filename)
                 .sample(false, sampleProbability)
                 .map(
@@ -45,63 +43,18 @@ public class testFPGrowth {
                             String[] fields = line.split(",");
 
                             for (int i = 0; i < fields.length; i++) {
-                                String columnName = fd.decodeColumn(i);
+
                                 String columnContent = fields[i];
-                                boolean reject = false;
 
-                                switch (columnName){
+                                Property prop = new Property(
+                                        i,
+                                        columnContent,
+                                        fd.decodeColumn(i),
+                                        fd.decodeValue(i,columnContent)
+                                );
 
-                                    case "ActivityCode":
-                                        reject = columnContent.equals("99");
-                                        break;
-
-                                    case "InjuryAtWork":
-                                        reject = columnContent.equals("U");
-                                        break;
-
-                                    case "RaceImputationFlag":
-                                        reject = true;
-                                        break;
-
-                                    case "AgeType":
-                                        reject = true;
-                                        break;
-
-                                    case "AgeRecode27":
-                                        reject = true;
-                                        break;
-
-                                    case "AgeRecode52":
-                                        reject = true;
-                                        break;
-
-                                    case "BridgedRaceFlag":
-                                        reject = true;
-                                        break;
-
-                                    case "AgeSubstitutionFlag":
-                                        reject = true;
-                                        break;
-
-                                    case "InfantAgeRecode22":
-                                        reject = true;
-                                        break;
-
-                                    case "InfantCauseRecode130":
-                                        reject = true;
-                                        break;
-
-                                    case "EducationReportingFlag":
-                                        reject = true;
-                                        break;
-                                }
-
-                                if (!reject)
-                                    transaction.add(new Property(
-                                            i,
-                                            columnContent,
-                                            fd.decodeColumn(i),
-                                            fd.decodeValue(i,columnContent)));
+                                if (!PropertyFilters.reject(prop))
+                                    transaction.add(prop);
                             }
 
                             return transaction;
@@ -141,8 +94,8 @@ public class testFPGrowth {
         long end = System.currentTimeMillis();
 
         System.out.println("[frequent itemsets] Elapsed time: " + ((end-import_data)/1000.0) + " s" );
-        double minConfidence = 0.1;
 
+        double minConfidence = 0.1;
         outputLines.clear();
         for (AssociationRules.Rule<Property> rule
                 : model.generateAssociationRules(minConfidence).toJavaRDD().collect()) {
@@ -162,7 +115,5 @@ public class testFPGrowth {
         }
 
     }
-
-
 
 }
