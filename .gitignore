@@ -2,6 +2,6 @@
 .idea/
 build/
 data/
-!data/columns
+!data/columns.csv
 results/
 
