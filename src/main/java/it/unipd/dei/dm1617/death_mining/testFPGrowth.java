@@ -4,6 +4,7 @@ package it.unipd.dei.dm1617.death_mining;
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
+import org.apache.spark.broadcast.Broadcast;
 import org.apache.spark.mllib.fpm.AssociationRules;
 import org.apache.spark.mllib.fpm.FPGrowth;
 import org.apache.spark.mllib.fpm.FPGrowthModel;
@@ -29,9 +30,9 @@ public class testFPGrowth {
         JavaSparkContext sc = new JavaSparkContext(sparkConf);
 
         String filename = "data/DeathRecords.csv";
-        FieldDecoder fd = new FieldDecoder();
+        Broadcast<FieldDecoder> fd = sc.broadcast(new FieldDecoder());
         double sampleProbability = 0.3;
-        double minSup = 0.5;
+        double minSup = 0.2;
 
         System.out.println("Sampling with probability " + sampleProbability + " and importing data");
 
@@ -49,8 +50,8 @@ public class testFPGrowth {
                                 Property prop = new Property(
                                         i,
                                         columnContent,
-                                        fd.decodeColumn(i),
-                                        fd.decodeValue(i,columnContent)
+                                        fd.value().decodeColumn(i),
+                                        fd.value().decodeValue(i,columnContent)
                                 );
 
                                 if (!PropertyFilters.reject(prop))
@@ -95,7 +96,7 @@ public class testFPGrowth {
 
         System.out.println("[frequent itemsets] Elapsed time: " + ((end-import_data)/1000.0) + " s" );
 
-        double minConfidence = 0.1;
+        double minConfidence = 0.3;
         outputLines.clear();
         for (AssociationRules.Rule<Property> rule
                 : model.generateAssociationRules(minConfidence).toJavaRDD().collect()) {
