@@ -22,7 +22,7 @@ public final class PropertyFilters {
             //Not applicable value brings no information 0.9243531
             case "ActivityCode":
                 reject = prop.getClassName().equals("99");
-                         // || prop.getClassName().equals("Not applicable");
+                       //|| prop.getClassName().equals("Not applicable");
                 break;
 
             case "AgeRecode27":
