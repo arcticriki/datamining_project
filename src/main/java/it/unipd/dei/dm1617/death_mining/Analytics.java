@@ -10,6 +10,7 @@ import org.apache.spark.mllib.fpm.FPGrowthModel;
 import scala.Array;
 import scala.Tuple2;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
@@ -19,6 +20,11 @@ import java.util.*;
 
 /**
  * Created by tonca on 11/05/17.
+ *
+ * This is a class for generic statistical analysis of the dataset
+ *
+ *
+ *
  */
 public class Analytics {
 
@@ -75,6 +81,11 @@ public class Analytics {
                 })
                 .collect();
 
+
+        File directory = new File("results/stats/");
+        if (! directory.exists()){
+            directory.mkdirs();
+        }
         for(Tuple2<Integer,ArrayList<String>> colList : outputs ) {
 
             Path file = Paths.get("results/stats/"+fd.value().decodeColumn(colList._1())+"_stats.txt");

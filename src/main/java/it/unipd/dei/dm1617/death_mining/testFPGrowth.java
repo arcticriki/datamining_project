@@ -9,6 +9,7 @@ import org.apache.spark.mllib.fpm.AssociationRules;
 import org.apache.spark.mllib.fpm.FPGrowth;
 import org.apache.spark.mllib.fpm.FPGrowthModel;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
@@ -82,7 +83,11 @@ public class testFPGrowth {
             System.out.println(line);
             outputLines.add(line);
         }
-
+        
+        File directory = new File("results/");
+        if (! directory.exists()){
+            directory.mkdir();
+        }
         // Writing output to a file
         Path file = Paths.get("results/frequent-itemsets.txt");
         try {
