@@ -1,5 +1,9 @@
 package it.unipd.dei.dm1617.death_mining;
 
+
+
+import java.util.List;
+
 /**
  * Created by tonca on 07/05/17.
  *
@@ -12,7 +16,12 @@ public final class PropertyFilters {
     private PropertyFilters() {
     }
 
-    // this function tells if a property has to be rejected
+    /*
+    This function tells if a property has to be rejected.
+    It removes Property with useless values and too much frequent items.
+    Better implementation needed (especially regarding frequent items). Following Tonca's suggestions ;)
+    */
+
     public static boolean reject(Property prop) {
 
         boolean reject = false;
@@ -59,15 +68,15 @@ public final class PropertyFilters {
             //No useful information from unknown values
             case "DayOfTheWeekOfDeath":
                 reject = prop
-                        .getClassName()
-                        .equals("Unknown");
+                         .getClassName()
+                         .equals("Unknown");
                 break;
 
             //No formal education value too much frequent 0.9093273
             case "Education1989Revision":
                 reject = prop
-                        .getClassName()
-                        .equals("No formal education");
+                         .getClassName()
+                         .equals("No formal education");
                 break;
 
             case "EducationReportingFlag":
@@ -79,6 +88,10 @@ public final class PropertyFilters {
                 break;
 
             case "HispanicOriginRaceRecode":
+                reject = true;
+                break;
+
+            case "Id":
                 reject = true;
                 break;
 
@@ -101,37 +114,37 @@ public final class PropertyFilters {
             //No useful information from not specified or pending investigation values
             case "MannerOfDeath":
                 reject = prop.getClassName().equals("Natural") ||
-                        prop.getClassName().equals("Not specified") ||
-                        prop.getClassName().equals("Pending investigation");
+                         prop.getClassName().equals("Not specified")  ||
+                         prop.getClassName().equals("Pending investigation");
                 break;
 
             //No useful information from unknown marital status
             case "MaritalStatus":
-            reject = prop
-                    .getClassName()
-                    .equals("Marital Status unknown");
-            break;
+                reject = prop
+                     .getClassName()
+                     .equals("Marital Status unknown");
+                break;
 
             //No useful information from unknown values
             case "PlaceOfDeathAndDecedentsStatus":
                 reject = prop
-                        .getClassName()
-                        .equals("Place of death unknown");
+                         .getClassName()
+                         .equals("Place of death unknown");
                 break;
 
             //No useful information from unspecified values
             //Causes other than W00-Y34 value too much frequent 0.9259508
             case "PlaceOfInjury":
                 reject = prop.getClassName().equals("Unspecified place") ||
-                         prop.getClassName().equals("Other Specified Places") ||
+                         prop.getClassName().equals("Other Specified Places"); // ||
                          prop.getClassName().equals("Causes other than W00-Y34");
                 break;
 
             //White race too much frequent 0.8520658
             case "Race":
                 reject = prop
-                        .getClassName()
-                        .equals("White");
+                         .getClassName()
+                         .equals("White");
                 break;
 
             case "RaceImputationFlag":
@@ -149,11 +162,26 @@ public final class PropertyFilters {
             //Resident value too much frequent 0.793026
             case "ResidentStatus":
                 reject = prop
-                        .getClassName()
-                        .equals("RESIDENTS");
+                         .getClassName()
+                         .equals("RESIDENTS");
                 break;
         }
 
         return reject;
     }
+
+    public static boolean rejectByColumn (Property prop, List<String> interestingColumns) {
+
+        String colName = prop.getColName();
+
+        //Remove Properties with useless items
+        if (PropertyFilters.reject(prop)) return true;
+
+        for (String column: interestingColumns) {
+            if (colName.equals(column)) return false;
+        }
+
+        return true;
+    }
+
 }
