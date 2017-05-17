@@ -14,6 +14,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 /**
  * Created by tonca on 11/05/17.
@@ -30,7 +33,7 @@ public class Analytics {
 
         String filename = "data/DeathRecords.csv";
         Broadcast<FieldDecoder> fd = sc.broadcast(new FieldDecoder());
-        double sampleProbability = 0.6;
+        double sampleProbability = 1;
 
         System.out.println("Sampling with probability " + sampleProbability + " and importing data");
 
@@ -61,7 +64,7 @@ public class Analytics {
         long transactionsCount = transactions.count();
         Broadcast<Long> bCount = sc.broadcast(transactionsCount);
 
-        List<Tuple2<Integer,ArrayList<String>>> outputs = transactions
+        List<Tuple2<Integer,List<String>>> outputs = transactions
             .map((itemset) -> itemset.stream())
             .mapPartitionsToPair((itemset) -> {
                 // This map holds the counts for each word in each partition.
@@ -79,14 +82,10 @@ public class Analytics {
             })
             .reduceByKey((x, y) -> x + y)
             .groupBy(item -> item._1()._1())
-            .map((Tuple2<Integer, Iterable<Tuple2<Property, Integer>>> item) -> {
-                ArrayList<String> lines = new ArrayList<>();
-                for( Tuple2<Property,Integer> counted : item._2()) {
-                    String line = counted._1() + ", " + ((float)counted._2()/bCount.value());
-                    lines.add(line);
-                }
-                return new Tuple2<>(item._1(),lines);
-            })
+            .map((item) -> new Tuple2<>(item._1(), StreamSupport
+                    .stream(item._2().spliterator(), false)
+                    .map((elem) -> elem._1() + ", " + ((float)elem._2()/bCount.value()))
+                    .collect(Collectors.toList())))
             .collect();
 
 
@@ -94,7 +93,7 @@ public class Analytics {
         if (! directory.exists()){
             directory.mkdirs();
         }
-        for(Tuple2<Integer,ArrayList<String>> colList : outputs ) {
+        for(Tuple2<Integer,List<String>> colList : outputs ) {
 
             Path file = Paths.get("results/stats/"+fd.value().decodeColumn(colList._1())+"_stats.txt");
             try {
