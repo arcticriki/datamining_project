@@ -1,13 +1,10 @@
 package it.unipd.dei.dm1617.death_mining;
 
-import com.clearspring.analytics.util.Lists;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.broadcast.Broadcast;
-import org.apache.spark.mllib.fpm.FPGrowth;
-import org.apache.spark.mllib.fpm.FPGrowthModel;
-import scala.Array;
 import scala.Tuple2;
 
 import java.io.File;
@@ -22,8 +19,6 @@ import java.util.*;
  * Created by tonca on 11/05/17.
  *
  * This is a class for generic statistical analysis of the dataset
- *
- *
  *
  */
 public class Analytics {
@@ -67,19 +62,32 @@ public class Analytics {
         Broadcast<Long> bCount = sc.broadcast(transactionsCount);
 
         List<Tuple2<Integer,ArrayList<String>>> outputs = transactions
-                .flatMap(itemset -> itemset.iterator())
-                .mapToPair(item -> new Tuple2<>(item, 1))
-                .reduceByKey((a, b) -> a + b)
-                .groupBy(item -> item._1()._1())
-                .map((Tuple2<Integer, Iterable<Tuple2<Property, Integer>>> item) -> {
-                    ArrayList<String> lines = new ArrayList<>();
-                    for( Tuple2<Property,Integer> counted : item._2()) {
-                        String line = counted._1() + ", " + ((float)counted._2()/bCount.value());
-                        lines.add(line);
-                    }
-                    return new Tuple2<>(item._1(),lines);
-                })
-                .collect();
+            .map((itemset) -> itemset.stream())
+            .mapPartitionsToPair((itemset) -> {
+                // This map holds the counts for each word in each partition.
+                Object2IntOpenHashMap<Property> partitionCounts = new Object2IntOpenHashMap<>();
+                partitionCounts.defaultReturnValue(0);
+                while (itemset.hasNext()) {
+                    Property item = itemset.next().findAny().get();
+                    int oldCnt = partitionCounts.getOrDefault(item, 0);
+                    partitionCounts.put(item, oldCnt + 1);
+                }
+                return partitionCounts
+                        .entrySet().stream()
+                        .map((entry) -> new Tuple2<>(entry.getKey(), entry.getValue()))
+                        .iterator();
+            })
+            .reduceByKey((x, y) -> x + y)
+            .groupBy(item -> item._1()._1())
+            .map((Tuple2<Integer, Iterable<Tuple2<Property, Integer>>> item) -> {
+                ArrayList<String> lines = new ArrayList<>();
+                for( Tuple2<Property,Integer> counted : item._2()) {
+                    String line = counted._1() + ", " + ((float)counted._2()/bCount.value());
+                    lines.add(line);
+                }
+                return new Tuple2<>(item._1(),lines);
+            })
+            .collect();
 
 
         File directory = new File("results/stats/");
