@@ -1,5 +1,6 @@
 package it.unipd.dei.dm1617.death_mining;
 
+import au.com.bytecode.opencsv.CSVReader;
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
@@ -7,10 +8,14 @@ import org.apache.spark.broadcast.Broadcast;
 import org.apache.spark.mllib.fpm.AssociationRules;
 import org.apache.spark.mllib.fpm.FPGrowth;
 import org.apache.spark.mllib.fpm.FPGrowthModel;
+import scala.Tuple2;
 
 
+import java.io.FileReader;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 /**
  * Created by Marco on 14/05/2017.
@@ -28,6 +33,35 @@ public class testLift {
         double sampleProbability = 0.3;
         double minSup = 0.2;
 
+        //Randomly select interesting columns from file columns.csv
+        List<String> interestingColumns = new ArrayList<>();
+        Random rand = new Random();
+
+        try {
+            CSVReader reader = new CSVReader(new FileReader("data/columns.csv"));
+            String[] columns = reader.readNext();
+
+            for (String c: columns) {
+                int temp = rand.nextInt(2);
+                if (temp == 1) interestingColumns.add(c);
+            }
+        }
+        catch (IOException e){
+            e.printStackTrace();
+        }
+
+        /*
+        Save selected interesting columns in a txt file. Just for testing ;)
+
+        Path columnsFile = Paths.get("results/random_interestingColumns.txt");
+        try {
+            Files.write(columnsFile, interestingColumns, Charset.forName("UTF-8"));
+        }
+        catch (IOException e) {
+            e.printStackTrace();
+        }
+        */
+
         System.out.println("Sampling with probability " + sampleProbability + " and importing data");
 
         JavaRDD<List<Property>> transactions = sc.textFile(filename)
@@ -40,7 +74,6 @@ public class testLift {
                             for (int i = 0; i < fields.length; i++) {
 
                                 String columnContent = fields[i];
-
                                 Property prop = new Property(
                                         i,
                                         columnContent,
@@ -48,8 +81,9 @@ public class testLift {
                                         fd.value().decodeValue(i,columnContent)
                                 );
 
-                                if (!PropertyFilters.reject(prop))
+                                if (!PropertyFilters.rejectByColumn(prop, interestingColumns)) {
                                     transaction.add(prop);
+                                }
                             }
 
                             return transaction;
@@ -76,8 +110,8 @@ public class testLift {
 
 
         double minlift = 1;
-        JavaRDD<AssociationRules.Rule<Property>> rules = model.generateAssociationRules(0).toJavaRDD().filter(
-                rule ->
+        JavaRDD<Tuple2<AssociationRules.Rule<Property>, Double>> rules = model.generateAssociationRules(0).toJavaRDD()
+                .map((rule) ->
                 {
                     double conf = rule.confidence();
                     long freq = 0;
@@ -91,10 +125,14 @@ public class testLift {
                         System.err.println("Error rules filter lift");
                     }
                     double suppConseq = (double) freq / transactionsCount;
-                    return ((conf / suppConseq) > minlift);
-                }
-        );
-        List<AssociationRules.Rule<Property>> filterRules = rules.collect();
+                    double lift = conf / suppConseq;
+                    return new Tuple2<>(rule, lift);
+                })
+                .filter(tuple -> (tuple._2 > minlift));
+
+
+
+        List<Tuple2<AssociationRules.Rule<Property>, Double>> filterRules = rules.collect();
 
 //        JavaRDD<AssociationRules.Rule<Property>> rules = model.generateAssociationRules(0).toJavaRDD();
 //        List<AssociationRules.Rule<Property>> filterRules = new ArrayList<AssociationRules.Rule<Property>>();
@@ -117,8 +155,8 @@ public class testLift {
 //            }
 //        }
 
-        for(AssociationRules.Rule<Property> filterRule : filterRules){
-            String line = filterRule.javaAntecedent() + " => " + filterRule.javaConsequent();
+        for(Tuple2<AssociationRules.Rule<Property>, Double> filterRule : filterRules){
+            String line = filterRule._1.javaAntecedent() + " => " + filterRule._1.javaConsequent() + " lift:" + filterRule._2;
             System.out.println(line);
         }
 
