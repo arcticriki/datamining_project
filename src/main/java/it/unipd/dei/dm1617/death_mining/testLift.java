@@ -31,7 +31,7 @@ public class testLift {
         String filename = "data/DeathRecords.csv";
         Broadcast<FieldDecoder> fd = sc.broadcast(new FieldDecoder());
         double sampleProbability = 0.3;
-        double minSup = 0.2;
+        double minSup = 0.1;
 
         //Randomly select interesting columns from file columns.csv
         List<String> interestingColumns = new ArrayList<>();
@@ -109,7 +109,7 @@ public class testLift {
         List<FPGrowth.FreqItemset<Property>> freqItemset = model.freqItemsets().toJavaRDD().collect();
 
 
-        double minlift = 1;
+        double deltaLift = 0.1;
         JavaRDD<Tuple2<AssociationRules.Rule<Property>, Double>> rules = model.generateAssociationRules(0).toJavaRDD()
                 .map((rule) ->
                 {
@@ -128,7 +128,7 @@ public class testLift {
                     double lift = conf / suppConseq;
                     return new Tuple2<>(rule, lift);
                 })
-                .filter(tuple -> (tuple._2 > minlift));
+                .filter(tuple -> (tuple._2 > 1+deltaLift || tuple._2 < 1-deltaLift));
 
 
 
