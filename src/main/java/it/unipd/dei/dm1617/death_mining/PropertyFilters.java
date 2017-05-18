@@ -1,8 +1,11 @@
 package it.unipd.dei.dm1617.death_mining;
 
 
-
+import scala.Tuple2;
+import java.util.ArrayList;
+import java.util.Hashtable;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created by tonca on 07/05/17.
@@ -11,10 +14,24 @@ import java.util.List;
  * for filtering properties during preprocessing
  *
  */
+
 public final class PropertyFilters {
 
     private PropertyFilters() {
     }
+
+    private static final String[] uselessColumns = {"AgeRecode27", "AgeRecode52", "AgeSubstitutionFlag", "AgeType",
+            "BridgedRaceFlag", "CurrentDataYear", "EducationReportingFlag", "HispnaicOrigin", "HispanicOriginRaceRecode",
+            "Id", "InfantAgeRecode22", "InfantCauseRecode130", "RaceImputationFlag", "RaceRecode5", "RaceRecode3"};
+
+    private static final Map<String, String[]> uselessItems = new Hashtable<String, String[]>() {{
+      put("ActivityCode", new String[] {"99", "Not applicable"} );
+      put("Autopsy", new String[] {"N", "n", "U"});
+      put("DayOfTheWeekOfDeath", new String[] {"Unknown"});
+      put("Education1989", new String[] {});
+      put("", new String[] {});
+    }};
+
 
     /*
     This function tells if a property has to be rejected.
@@ -30,8 +47,8 @@ public final class PropertyFilters {
 
             //Not applicable value brings no information 0.9243531
             case "ActivityCode":
-                reject = prop.getClassName().equals("99");
-                       //|| prop.getClassName().equals("Not applicable");
+                reject = prop.getClassName().equals("99") ||
+                         prop.getClassName().equals("Not applicable");
                 break;
 
             case "AgeRecode27":
@@ -136,7 +153,7 @@ public final class PropertyFilters {
             //Causes other than W00-Y34 value too much frequent 0.9259508
             case "PlaceOfInjury":
                 reject = prop.getClassName().equals("Unspecified place") ||
-                         prop.getClassName().equals("Other Specified Places"); // ||
+                         prop.getClassName().equals("Other Specified Places") ||
                          prop.getClassName().equals("Causes other than W00-Y34");
                 break;
 
@@ -170,18 +187,43 @@ public final class PropertyFilters {
         return reject;
     }
 
-    public static boolean rejectByColumn (Property prop, List<String> interestingColumns) {
+    public static boolean rejectByColumn (Property prop, List<String> additionalUselessColumns) {
 
         String colName = prop.getColName();
+        List<String> totalUselessColumns = new ArrayList<>();
+
+        for (String uselessColumn: uselessColumns) {
+            totalUselessColumns.add(uselessColumn);
+        }
+
+        for (String uselessColumn: additionalUselessColumns) {
+            totalUselessColumns.add(uselessColumn);
+        }
 
         //Remove Properties with useless items
         if (PropertyFilters.reject(prop)) return true;
 
-        for (String column: interestingColumns) {
-            if (colName.equals(column)) return false;
+        for (String column: totalUselessColumns) {
+            if (colName.equals(column)) return true;
         }
 
-        return true;
+        return false;
+    }
+    
+    public static boolean rejectByValue (Property prop, List<Tuple2<String, List<String>>> uselessValues) {
+        String colName = prop.getColName();
+        String colValue = prop.getClassName();
+
+        if (PropertyFilters.reject(prop)) return true;
+
+        for (Tuple2<String, List<String>> tuple: uselessValues) {
+            if (colName.equals(tuple._1()))
+                for (String value: tuple._2) {
+                    if (colValue.equals(value)) return true;
+                }
+        }
+
+        return false;
     }
 
 }
