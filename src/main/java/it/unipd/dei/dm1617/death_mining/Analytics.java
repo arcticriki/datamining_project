@@ -15,7 +15,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 /**
@@ -49,8 +48,6 @@ public class Analytics {
                                 String columnContent = fields[i];
 
                                 Property prop = new Property(
-                                        i,
-                                        columnContent,
                                         fd.value().decodeColumn(i),
                                         fd.value().decodeValue(i,columnContent)
                                 );
@@ -64,7 +61,7 @@ public class Analytics {
         long transactionsCount = transactions.count();
         Broadcast<Long> bCount = sc.broadcast(transactionsCount);
 
-        List<Tuple2<Integer,List<String>>> outputs = transactions
+        List<Tuple2<String,List<String>>> outputs = transactions
             .map((itemset) -> itemset.stream())
             .mapPartitionsToPair((itemset) -> {
                 // This map holds the counts for each word in each partition.
@@ -93,7 +90,7 @@ public class Analytics {
         if (! directory.exists()){
             directory.mkdirs();
         }
-        for(Tuple2<Integer,List<String>> colList : outputs ) {
+        for(Tuple2<String,List<String>> colList : outputs ) {
 
             Path file = Paths.get("results/stats/"+fd.value().decodeColumn(colList._1())+"_stats.txt");
             try {
