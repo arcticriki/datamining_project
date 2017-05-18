@@ -76,7 +76,7 @@ public class testFPGrowth {
                             List<Property> transaction = new ArrayList<>();
                             String[] fields = line.split(",");
 
-                            for (int i = 0; i < fields.length; i++) {
+                            for (int i = 1; i < fields.length; i++) {
 
                                 String columnContent = fields[i];
                                 Property prop = new Property(
