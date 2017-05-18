@@ -19,6 +19,7 @@ import java.util.Random;
 
 /**
  * Created by Marco on 14/05/2017.
+ *
  */
 public class testLift {
     public static void main(String[] args) {
@@ -31,7 +32,7 @@ public class testLift {
         String filename = "data/DeathRecords.csv";
         Broadcast<FieldDecoder> fd = sc.broadcast(new FieldDecoder());
         double sampleProbability = 0.3;
-        double minSup = 0.1;
+        double minSup = 0.05;
 
         //Randomly select interesting columns from file columns.csv
         List<String> interestingColumns = new ArrayList<>();
@@ -75,8 +76,6 @@ public class testLift {
 
                                 String columnContent = fields[i];
                                 Property prop = new Property(
-                                        i,
-                                        columnContent,
                                         fd.value().decodeColumn(i),
                                         fd.value().decodeValue(i,columnContent)
                                 );
@@ -103,7 +102,6 @@ public class testLift {
                 .setMinSupport(minSup)
                 .setNumPartitions(10);
         FPGrowthModel<Property> model = fpg.run(transactions);
-
 
 
         List<FPGrowth.FreqItemset<Property>> freqItemset = model.freqItemsets().toJavaRDD().collect();
