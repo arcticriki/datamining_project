@@ -75,8 +75,6 @@ public class testLift {
 
                                 String columnContent = fields[i];
                                 Property prop = new Property(
-                                        i,
-                                        columnContent,
                                         fd.value().decodeColumn(i),
                                         fd.value().decodeValue(i,columnContent)
                                 );
