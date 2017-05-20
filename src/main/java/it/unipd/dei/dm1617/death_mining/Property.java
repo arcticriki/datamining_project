@@ -5,16 +5,10 @@ import scala.Tuple2;
 /**
  * Created by gianluca on 05/05/17.
  */
+public class Property extends Tuple2<String,String>{
 
-public class Property extends Tuple2<Integer,String>{
-
-    private String colName;
-    private String className;
-
-    public Property(int key, String value, String colName, String className){
-        super(key, value);
-        this.className = className;
-        this.colName = colName;
+    public Property(String colName, String className){
+        super(colName, className);
     }
 
     public String toString(){
@@ -22,26 +16,13 @@ public class Property extends Tuple2<Integer,String>{
     }
 
     public String format(){
-        return "(" + this.colName + ", " + this.className + ")";
+        return "(" + this._1 + ", " + this._2 + ")";
     }
 
     public String getColName() {
-        return colName;
-    }
-
-    public void setColName(String colName) {
-        this.colName = colName;
-    }
-
-    public String getClassName() { return className; }
-
-    public void setClassName(String className) { this.className = className; }
-
-    public int getName(){
         return this._1;
     }
 
-    public String getValue(){
-        return this._2;
-    }
+    public String getClassName() { return this._2; }
+
 }
