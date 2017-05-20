@@ -75,13 +75,11 @@ public class testLift {
 
                                 String columnContent = fields[i];
                                 Property prop = new Property(
-                                        i,
-                                        columnContent,
                                         fd.value().decodeColumn(i),
                                         fd.value().decodeValue(i,columnContent)
                                 );
 
-                                if (!PropertyFilters.rejectByColumn(prop, interestingColumns)) {
+                                if (!PropertyFilters.rejectUseless(prop)) {
                                     transaction.add(prop);
                                 }
                             }
