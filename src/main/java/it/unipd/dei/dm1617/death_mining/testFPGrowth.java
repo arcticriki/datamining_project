@@ -56,13 +56,13 @@ public class testFPGrowth {
                                 //AgeType is relevant because it expresses the measure unit of the values in Age.
                                 //E.g.: (Age, 17) -> (Age, 17,year) then binning produces (Age, Teenager)
                                 //If a similar situation will happen when considering other columns, I suggest an analog solution.
-                                if (prop.getColName().equals("Age")){
-                                    for (int k = 0; k < fields.length; k++) {
-                                        if (fd.value().decodeColumn(k).equals("AgeType")) {
-                                            String measure = fd.value().decodeValue(k, "AgeType");
-                                            measure = prop.getClassName()+","+measure;
-                                            prop = new Property( prop.getColName(), measure);
-                                            break;
+                                //if (prop.getColName().equals("Age")){
+                                    //for (int k = 0; k < fields.length; k++) {
+                                        //if (fd.value().decodeColumn(k).equals("AgeType")) {
+                                            //String measure = fd.value().decodeValue(k, "AgeType");
+                                            //measure = prop.getClassName()+","+measure;
+                                            //prop = new Property( prop.getColName(), measure);
+                                            //break;
                                         }
                                     }
                                 }

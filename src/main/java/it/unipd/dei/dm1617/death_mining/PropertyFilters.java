@@ -43,8 +43,8 @@ public final class PropertyFilters {
 
     //This constant array stores all the useless columns. It is used in preprocessing in order to
     //delete items (=property) with useless or not interesting columns.
-    private static final String[] uselessColumns = {"AgeRecode27", "AgeRecode52", "AgeSubstitutionFlag", "AgeType",
-            "BridgedRaceFlag", "CurrentDataYear", "EducationReportingFlag", "HispnaicOrigin", "HispanicOriginRaceRecode",
+    private static final String[] uselessColumns = {"Age","AgeRecode12", "AgeRecode52", "AgeSubstitutionFlag", "AgeType",
+            "BridgedRaceFlag", "CurrentDataYear", "EducationReportingFlag","Education1989Revision", "HispanicOrigin", "HispanicOriginRaceRecode",
             "Id", "InfantAgeRecode22", "InfantCauseRecode130", "RaceImputationFlag", "RaceRecode5", "RaceRecode3"};
 
 
@@ -132,5 +132,110 @@ public final class PropertyFilters {
 
         return false;
     }
+
+
+    //This constant array stores all the columns that need a binning process
+    private static final String[] binningColumns = {"AgeRecode27", "CauseRecode39"};
+
+    //Auxiliar method used for the binning. The information along some categories can be grouped into some
+    //binned categories, for a better understanding of the results. In particular, the CauseRecoded39 has been
+    //reduced to 20 possible death categories
+    public static Property binningProperties(Property prop)
+    {
+
+        String colName = prop.getColName();
+        String colValue = prop.getClassName();
+
+        if (colName.equals(binningColumns[0])) //Binning the age
+        {
+
+            Double code = Double.parseDouble(colValue);
+
+            if (code==1 || code==2)
+            {Property binnedValue = new Property("AgeRecode27","Baby");
+                return binnedValue; }
+            else if ( 3<= code <=8 ) {Property binnedValue = new Property("BinnedAge","Child");
+                return binnedValue;}
+            else if (code == 9) {Property binnedValue = new Property("BinnedAge","Teenager");
+                return binnedValue;}
+            else if (10 <=code <=12) {Property binnedValue = new Property("BinnedAge","Young");
+                return binnedValue;}
+            else if (13 <= code <= 19) {Property binnedValue = new Property("BinnedAge","Adult");
+                return binnedValue;}
+            else if (20 <= code <= 26) {Property binnedValue = new Property("BinnedAge","Old");
+                return binnedValue;}
+            else if (code == 27) {Property binnedValue = new Property("BinnedAge","Age not specified");
+                return binnedValue;}
+        }
+
+        if (colName.equals(binningColumns[1]))
+        {
+            Double code = Double.parseDouble(colValue);
+
+            if(code == 28)
+            {Property binnedValue = new Property("DeathCategory","Respiratory diseases");
+                return binnedValue;}
+            else if (1 <= code <= 3)
+            {Property binnedValue = new Property("DeathCategory","Infections (Sifilidis, HIV, Tubercolosis included");
+                return binnedValue;}
+            else if (5 <= code <= 12 || code == 15)
+            {Property binnedValue = new Property("DeathCategory","Malignant Neoplasm in some organ");
+                return binnedValue;}
+            else if (code == 13)
+            {Property binnedValue = new Property("DeathCategory","Cancer");
+                return binnedValue;}
+            else if(code == 14)
+            {Property binnedValue = new Property("DeathCategory","Leukemia");
+                return binnedValue;}
+            else if(code == 16)
+            {Property binnedValue = new Property("DeathCategory","Diabetis");
+                return binnedValue;}
+            else if(code == 17)
+            {Property binnedValue = new Property("DeathCategory","Alzahimer");
+                return binnedValue;}
+            else if(20 <= code <= 22)
+            {Property binnedValue = new Property("DeathCategory","Heart disease");
+                return binnedValue;}
+            else if (code==23)
+            {Property binnedValue = new Property("DeathCategory","Endocrinal disease");
+                return binnedValue;}
+            else if(24 <= code <= 26)
+            {Property binnedValue = new Property("DeathCategory","Circolatory system");
+                return binnedValue;}
+            else if(code == 27)
+            {Property binnedValue = new Property("DeathCategory","Influenza and pneumonia");
+                return binnedValue;}
+            else if(code == 37 || code == 38)
+            {Property binnedValue = new Property("DeathCategory","Accident");
+                return binnedValue;}
+            else if (code == 39)
+            {Property binnedValue = new Property("DeathCategory","Suicide");
+                return binnedValue;}
+            else if (code == 40)
+            {Property binnedValue = new Property("DeathCategory","Homicide");
+                return binnedValue;}
+            else if (code == 35 || code == 41)
+            {Property binnedValue = new Property("DeathCategory","All other causes");
+                return binnedValue;}
+            else if (code == 36)
+            {Property binnedValue = new Property("DeathCategory","Other Diseases");
+                return binnedValue;}
+            else if (code == 29)
+            {Property binnedValue = new Property("DeathCategory","Gastroenterology disease (Peptic ulcer included)");
+                return binnedValue;}
+            else if (code == 30 || code == 31)
+            {Property binnedValue = new Property("DeathCategory","Nephrology disease");
+                return binnedValue;}
+            else if (code == 32 || code == 34)
+            {Property binnedValue = new Property("DeathCategory","Complicancies occured in perinatal period or Sudden Infant Death Syndrome");
+                return binnedValue;}
+            else (code == 33)
+            {Property binnedValue = new Property("DeathCategory","Congenital malformations, deformations and chromosomal abnormalities");
+                return binnedValue;}
+
+        }
+
+    }
+
 
 }
