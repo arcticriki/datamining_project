@@ -1,7 +1,6 @@
 package it.unipd.dei.dm1617.death_mining;
 
 
-import au.com.bytecode.opencsv.CSVReader;
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
@@ -11,7 +10,6 @@ import org.apache.spark.mllib.fpm.FPGrowth;
 import org.apache.spark.mllib.fpm.FPGrowthModel;
 
 import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
@@ -19,7 +17,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
 
 /**
  * Created by tonca on 05/05/17.
@@ -36,7 +33,7 @@ public class testFPGrowth {
         String filename = "data/DeathRecords.csv";
         Broadcast<FieldDecoder> fd = sc.broadcast(new FieldDecoder());
         double sampleProbability = 0.3;
-        double minSup = 0.2;
+        double minSup = 0.1;
 
         System.out.println("Sampling with probability " + sampleProbability + " and importing data");
 
@@ -55,7 +52,24 @@ public class testFPGrowth {
                                         fd.value().decodeValue(i,columnContent)
                                 );
 
-                                if (!PropertyFilters.reject(prop)) {
+                                //This computation is performed in order to make easier the binning of the column Age.
+                                //AgeType is relevant because it expresses the measure unit of the values in Age.
+                                //E.g.: (Age, 17) -> (Age, 17,year) then binning produces (Age, Teenager)
+                                //If a similar situation will happen when considering other columns, I suggest an analog solution.
+                                if (prop.getColName().equals("Age")){
+                                    for (int k = 0; k < fields.length; k++) {
+                                        if (fd.value().decodeColumn(k).equals("AgeType")) {
+                                            String measure = fd.value().decodeValue(k, "AgeType");
+                                            measure = prop.getClassName()+","+measure;
+                                            prop = new Property( prop.getColName(), measure);
+                                            break;
+                                        }
+                                    }
+                                }
+
+                                //Insert here PropertyFilters.binningColumns(prop) method
+
+                                if (!PropertyFilters.rejectUseless(prop)) {
                                     transaction.add(prop);
                                 }
                             }
@@ -97,7 +111,7 @@ public class testFPGrowth {
         }
 
         // Writing output to a file
-        Path file = Paths.get("results/frequent-itemsets.txt");
+        Path file = Paths.get("results/frequent-itemsets_rejectUseless.txt");
         try {
             Files.write(file, outputLines, Charset.forName("UTF-8"));
         }
@@ -120,7 +134,7 @@ public class testFPGrowth {
             }
         }
 
-        file = Paths.get("results/association-rules.txt");
+        file = Paths.get("results/association-rules_rejectUseless.txt");
         try {
             Files.write(file, outputLines, Charset.forName("UTF-8"));
         }

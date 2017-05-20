@@ -79,7 +79,7 @@ public class testLift {
                                         fd.value().decodeValue(i,columnContent)
                                 );
 
-                                if (!PropertyFilters.rejectByColumn(prop, interestingColumns)) {
+                                if (!PropertyFilters.rejectUseless(prop)) {
                                     transaction.add(prop);
                                 }
                             }

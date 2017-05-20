@@ -16,13 +16,13 @@ public class Property extends Tuple2<String,String>{
     }
 
     public String format(){
-        return "(" + this._1 + ", " + this._2 + ")";
+        return "(" + this._1() + ", " + this._2() + ")";
     }
 
     public String getColName() {
-        return this._1;
+        return this._1();
     }
 
-    public String getClassName() { return this._2; }
+    public String getClassName() { return this._2(); }
 
 }

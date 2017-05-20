@@ -2,10 +2,7 @@ package it.unipd.dei.dm1617.death_mining;
 
 
 import scala.Tuple2;
-import java.util.ArrayList;
-import java.util.Hashtable;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Created by tonca on 07/05/17.
@@ -20,207 +17,117 @@ public final class PropertyFilters {
     private PropertyFilters() {
     }
 
+    //Private class used to create the array of useless items.
+    //It represents a container of all the values to be rejected with respect to the given column.
+    //In particular, the variable 'reference' represents the column name, while the array 'values'
+    // contains all the useless values.
+    private static class Couple {
+        private String[] values = null;
+        private String reference;
+
+        //Constructor
+        public Couple (String s, String[] array) {
+            this.values = new String[array.length];
+            this.reference = s;
+            for (int i=0; i<array.length; i++) {
+                this.values[i] = array[i];
+            }
+        }
+
+        //Simple methods in order to get respectively the reference and the values of a couple
+        public String getReference() {return this.reference;}
+
+        public String[] getValues() {return this.values;}
+    }
+
+
+    //This constant array stores all the useless columns. It is used in preprocessing in order to
+    //delete items (=property) with useless or not interesting columns.
     private static final String[] uselessColumns = {"AgeRecode27", "AgeRecode52", "AgeSubstitutionFlag", "AgeType",
             "BridgedRaceFlag", "CurrentDataYear", "EducationReportingFlag", "HispnaicOrigin", "HispanicOriginRaceRecode",
             "Id", "InfantAgeRecode22", "InfantCauseRecode130", "RaceImputationFlag", "RaceRecode5", "RaceRecode3"};
 
-    private static final Map<String, String[]> uselessItems = new Hashtable<String, String[]>() {{
-      put("ActivityCode", new String[] {"99", "Not applicable"} );
-      put("Autopsy", new String[] {"N", "n", "U"});
-      put("DayOfTheWeekOfDeath", new String[] {"Unknown"});
-      put("Education1989", new String[] {});
-      put("", new String[] {});
-    }};
+
+    //This constant array stores all the couples used for preprocessing. A couple is inserted for each column
+    //that presents either useless/not interesting items' values or too much frequent values.
+    //In particular, these last ones produce dirty outputs both in frequent itemsets and in association rules
+    //computation, because they are repeated in several itemsets.
+    private static final Couple[] uselessItems = {new Couple("ActivityCode", new String[] {"99", "Not applicable"}),
+            new Couple("Autopsy", new String[] {"n", "N", "U"}),
+            new Couple("DayOfTheWeekOfDeath", new String[] {"Unknown"}),
+            new Couple("Education1989Revision", new String[] {"No formal education"}),
+            new Couple("InjuryAtWork", new String[] {"U"}),
+            new Couple("MannerOfDeath", new String[] {"Natural", "Not specified"}),
+            new Couple("MaritalStatus", new String[] {"Marital Status unknown"}),
+            new Couple("PlaceOfDeathAndDecedentsStatus", new String[] {"Place of death unknown"}),
+            new Couple("PlaceOfInjury", new String[] {"Unspecified place", "Other Specifided Places", "Causes other than W00-Y34"}),
+            new Couple("Race", new String[] {"White"}),
+            new Couple("ResidentStatus", new String[] {"RESIDENTS"})};
 
 
-    /*
-    This function tells if a property has to be rejected.
-    It removes Property with useless values and too much frequent items.
-    Better implementation needed (especially regarding frequent items). Following Tonca's suggestions ;)
-    */
+    //Principal method used for preprocessing. Given an item (=property), it is declared as
+    //rejectable (=true output) by evaluating its attributes (=column and value) which are compared with
+    //the values stored in 'uselessColumns' and 'uselessItems'.
+    public static boolean rejectUseless(Property prop) {
+        String column = prop.getColName();
+        String value = prop.getClassName();
 
-    public static boolean reject(Property prop) {
-
-        boolean reject = false;
-
-        switch (prop.getColName()) {
-
-            //Not applicable value brings no information 0.9243531
-            case "ActivityCode":
-                reject = prop.getClassName().equals("99") ||
-                         prop.getClassName().equals("Not applicable");
-                break;
-
-            case "AgeRecode27":
-                reject = true;
-                break;
-
-            case "AgeRecode52":
-                reject = true;
-                break;
-
-            case "AgeSubstitutionFlag":
-                reject = true;
-                break;
-
-            case "AgeType":
-                reject = true;
-                break;
-
-            //No autopsy (N/n) value too much frequent 0.8584129
-            //No information from unknown (U) values
-            case "Autopsy":
-                reject = prop.getClassName().equalsIgnoreCase("n") ||
-                         prop.getClassName().equals("U");
-                break;
-
-            case "BridgedRaceFlag":
-                reject = true;
-                break;
-
-            case "CurrentDataYear":
-                reject = true;
-                break;
-
-            //No useful information from unknown values
-            case "DayOfTheWeekOfDeath":
-                reject = prop
-                         .getClassName()
-                         .equals("Unknown");
-                break;
-
-            //No formal education value too much frequent 0.9093273
-            case "Education1989Revision":
-                reject = prop
-                         .getClassName()
-                         .equals("No formal education");
-                break;
-
-            case "EducationReportingFlag":
-                reject = true;
-                break;
-
-            case "HispanicOrigin":
-                reject = true;
-                break;
-
-            case "HispanicOriginRaceRecode":
-                reject = true;
-                break;
-
-            case "Id":
-                reject = true;
-                break;
-
-            case "InfantAgeRecode22":
-                reject = true;
-                break;
-
-            case "InfantCauseRecode130":
-                reject = true;
-                break;
-
-            //No useful information from unknown values 0.92023873
-            case "InjuryAtWork":
-                reject = prop
-                        .getClassName()
-                        .equals("U");
-                break;
-
-            //Natural manner of death too much frequent 0.78309494
-            //No useful information from not specified or pending investigation values
-            case "MannerOfDeath":
-                reject = prop.getClassName().equals("Natural") ||
-                         prop.getClassName().equals("Not specified")  ||
-                         prop.getClassName().equals("Pending investigation");
-                break;
-
-            //No useful information from unknown marital status
-            case "MaritalStatus":
-                reject = prop
-                     .getClassName()
-                     .equals("Marital Status unknown");
-                break;
-
-            //No useful information from unknown values
-            case "PlaceOfDeathAndDecedentsStatus":
-                reject = prop
-                         .getClassName()
-                         .equals("Place of death unknown");
-                break;
-
-            //No useful information from unspecified values
-            //Causes other than W00-Y34 value too much frequent 0.9259508
-            case "PlaceOfInjury":
-                reject = prop.getClassName().equals("Unspecified place") ||
-                         prop.getClassName().equals("Other Specified Places") ||
-                         prop.getClassName().equals("Causes other than W00-Y34");
-                break;
-
-            //White race too much frequent 0.8520658
-            case "Race":
-                reject = prop
-                         .getClassName()
-                         .equals("White");
-                break;
-
-            case "RaceImputationFlag":
-                reject = true;
-                break;
-
-            case "RaceRecode5":
-                reject = true;
-                break;
-
-            case "RaceRecode3":
-                reject = true;
-                break;
-
-            //Resident value too much frequent 0.793026
-            case "ResidentStatus":
-                reject = prop
-                         .getClassName()
-                         .equals("RESIDENTS");
-                break;
+        for (String currentUselessColumn: uselessColumns) {
+            if (currentUselessColumn.equals(column)) return true;
         }
 
-        return reject;
-    }
+        for (Couple c: uselessItems) {
+            String currentUselessColumn = c.getReference();
+            String[] currentUselessValues = c.getValues();
 
-    public static boolean rejectByColumn (Property prop, List<String> additionalUselessColumns) {
-
-        String colName = prop.getColName();
-        List<String> totalUselessColumns = new ArrayList<>();
-
-        for (String uselessColumn: uselessColumns) {
-            totalUselessColumns.add(uselessColumn);
-        }
-
-        for (String uselessColumn: additionalUselessColumns) {
-            totalUselessColumns.add(uselessColumn);
-        }
-
-        //Remove Properties with useless items
-        if (PropertyFilters.reject(prop)) return true;
-
-        for (String column: totalUselessColumns) {
-            if (colName.equals(column)) return true;
+            if (currentUselessColumn.equals(column)) {
+                for (String currentUselessValue : currentUselessValues) {
+                    if (currentUselessValue.equals(value)) return true;
+                }
+                break;
+            }
         }
 
         return false;
     }
-    
-    public static boolean rejectByValue (Property prop, List<Tuple2<String, List<String>>> uselessValues) {
+
+
+    //Auxiliar method used to perform additional filtering. It is particularly useful in case of a
+    //computation of frequent itemsets and association rules which is limited to few specific columns.
+    //This can be useful, for example, in order to compute fancy association rules like the one that involves Education and Autopsy.
+    public static boolean rejectAdditionalColumns (Property prop, List<String> additionalUselessColumns) {
+
+        //Remove Properties with useless items
+        if (PropertyFilters.rejectUseless(prop)) return true;
+
+        String colName = prop.getColName();
+
+        for (String column: additionalUselessColumns) {
+            if (column.equals(colName)) return true;
+        }
+
+        return false;
+    }
+
+
+    //Auxiliar method used to perform additional filtering. It is particularly useful in case of a
+    //computation of frequent itemsets and association rules which is focuses on few specific values of a columns.
+    //This can be useful, for example, if we want to compute the association rules that involve only few specific classes of deseases.
+    public static boolean rejectAdditionalValues (Property prop, List<Tuple2<String, List<String>>> additionalUselessValues) {
+
+        //Remove Properties with useless items
+        if (PropertyFilters.rejectUseless(prop)) return true;
+
         String colName = prop.getColName();
         String colValue = prop.getClassName();
 
-        if (PropertyFilters.reject(prop)) return true;
-
-        for (Tuple2<String, List<String>> tuple: uselessValues) {
-            if (colName.equals(tuple._1()))
-                for (String value: tuple._2) {
-                    if (colValue.equals(value)) return true;
+        for (Tuple2<String, List<String>> tuple: additionalUselessValues) {
+            if (tuple._1().equals(colName)) {
+                for (String uselessValue : tuple._2()) {
+                    if (uselessValue.equals(colValue)) return true;
                 }
+                break;
+            }
         }
 
         return false;
