@@ -38,35 +38,7 @@ public class testFPGrowth {
         double sampleProbability = 0.3;
         double minSup = 0.2;
 
-        //Randomly select interesting columns from file columns.csv
-        List<String> interestingColumns = new ArrayList<>();
-        Random rand = new Random();
-
-        try {
-            CSVReader reader = new CSVReader(new FileReader("data/columns.csv"));
-            String[] columns = reader.readNext();
-
-            for (String c: columns) {
-                int temp = rand.nextInt(2);
-                if (temp == 1) interestingColumns.add(c);
-            }
-        }
-        catch (IOException e){
-            e.printStackTrace();
-        }
-
-        /*
-        Save selected interesting columns in a txt file. Just for testing ;)
-
-        Path columnsFile = Paths.get("results/random_interestingColumns.txt");
-        try {
-            Files.write(columnsFile, interestingColumns, Charset.forName("UTF-8"));
-        }
-        catch (IOException e) {
-            e.printStackTrace();
-        }
-        */
-
+      
         System.out.println("Sampling with probability " + sampleProbability + " and importing data");
 
         JavaRDD<List<Property>> transactions = sc.textFile(filename)
@@ -84,7 +56,7 @@ public class testFPGrowth {
                                         fd.value().decodeValue(i,columnContent)
                                 );
 
-                                if (!PropertyFilters.rejectByColumn(prop, interestingColumns)) {
+                                if (!PropertyFilters.reject(prop)) {
                                     transaction.add(prop);
                                 }
                             }
