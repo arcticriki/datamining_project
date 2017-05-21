@@ -49,7 +49,8 @@ public class testFPGrowth {
                                 String columnContent = fields[i];
                                 Property prop = new Property(
                                         fd.value().decodeColumn(i),
-                                        fd.value().decodeValue(i,columnContent)
+                                        fd.value().decodeValue(i,columnContent),
+                                        columnContent
                                 );
 
                                 //This computation is performed in order to make easier the binning of the column Age.

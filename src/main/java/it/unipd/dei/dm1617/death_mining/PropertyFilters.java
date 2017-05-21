@@ -137,6 +137,40 @@ public final class PropertyFilters {
     //This constant array stores all the columns that need a binning process
     private static final String[] binningColumns = {"AgeRecode27", "CauseRecode39"};
 
+    private static final NavigableMap<Integer, String> AGE_MAP;
+    static
+    {
+        NavigableMap<Integer, String> map = new TreeMap();
+        map.put(1, "Baby");     // 1..2 => Baby
+        map.put(3, "Child");    // 3..8 => Child
+        map.put(9, "Teenager"); // 9 => Teenager
+        map.put(10, "Young");   // 10..12 => Young
+        map.put(13, "Adult");   // 13..19 => Adult
+        map.put(20, "Old");     // 20..26 => Old
+        map.put(27, "Not Specified");// 27 => Not Specified
+        AGE_MAP = Collections.unmodifiableNavigableMap(map);
+    }
+
+    private static final NavigableMap<Integer, String> CAUSE_MAP;
+    static
+    {
+        NavigableMap<Integer, String> map = new TreeMap();
+        map.put(0, "ciao");    // 0..4     => 0
+        map.put(5, "ciao");    // 5..10    => 1
+        map.put(11, "dioboe");   // 11..200  => 2
+        CAUSE_MAP = Collections.unmodifiableNavigableMap(map);
+    }
+
+    private static final NavigableMap<Integer, String> EDUREV_MAP;
+    static
+    {
+        NavigableMap<Integer, String> map = new TreeMap();
+        map.put(0, "ciao");    // 0..4     => 0
+        map.put(5, "ciao");    // 5..10    => 1
+        map.put(11, "dioboe");   // 11..200  => 2
+        EDUREV_MAP = Collections.unmodifiableNavigableMap(map);
+    }
+
     //Auxiliar method used for the binning. The information along some categories can be grouped into some
     //binned categories, for a better understanding of the results. In particular, the CauseRecoded39 has been
     //reduced to 20 possible death categories
@@ -144,35 +178,24 @@ public final class PropertyFilters {
     {
 
         String colName = prop.getColName();
-        String colValue = prop.getClassName();
+        String valIndex = prop.getClassIndex();
 
+        String newCol = "BINNING ERROR!";
+        String newVal = "BINNING ERROR!";
         if (colName.equals(binningColumns[0])) //Binning the age
         {
 
-            Double code = Double.parseDouble(colValue);
+            int code = Integer.parseInt(valIndex);
+            newCol = "Binned Age";
+            newVal = AGE_MAP.floorEntry(code).getValue();
 
-            if (code==1 || code==2)
-            {Property binnedValue = new Property("AgeRecode27","Baby");
-                return binnedValue; }
-            else if ( 3<= code <=8 ) {Property binnedValue = new Property("BinnedAge","Child");
-                return binnedValue;}
-            else if (code == 9) {Property binnedValue = new Property("BinnedAge","Teenager");
-                return binnedValue;}
-            else if (10 <=code <=12) {Property binnedValue = new Property("BinnedAge","Young");
-                return binnedValue;}
-            else if (13 <= code <= 19) {Property binnedValue = new Property("BinnedAge","Adult");
-                return binnedValue;}
-            else if (20 <= code <= 26) {Property binnedValue = new Property("BinnedAge","Old");
-                return binnedValue;}
-            else if (code == 27) {Property binnedValue = new Property("BinnedAge","Age not specified");
-                return binnedValue;}
         }
+        else if (colName.equals(binningColumns[1])) {
+            int code = Integer.parseInt(valIndex);
+            newCol = "Binned Age";
+            newVal = CAUSE_MAP.floorEntry(code).getValue();
 
-        if (colName.equals(binningColumns[1]))
-        {
-            Double code = Double.parseDouble(colValue);
-
-            if(code == 28)
+            /*if(code == 28)
             {Property binnedValue = new Property("DeathCategory","Respiratory diseases");
                 return binnedValue;}
             else if (1 <= code <= 3)
@@ -231,10 +254,15 @@ public final class PropertyFilters {
                 return binnedValue;}
             else (code == 33)
             {Property binnedValue = new Property("DeathCategory","Congenital malformations, deformations and chromosomal abnormalities");
-                return binnedValue;}
-
+             return binnedValue;}*/
+        }
+        else if (colName.equals(binningColumns[1])) {
+            int code = Integer.parseInt(valIndex);
+            newCol = "Binned Age";
+            newVal = CAUSE_MAP.floorEntry(code).getValue();
         }
 
+        return new Property(newCol, newVal);
     }
 
 
