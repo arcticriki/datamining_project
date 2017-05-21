@@ -32,7 +32,7 @@ public class testFPGrowth {
 
         String filename = "data/DeathRecords.csv";
         Broadcast<FieldDecoder> fd = sc.broadcast(new FieldDecoder());
-        double sampleProbability = 1;
+        double sampleProbability = 0.3;
         double minSup = 0.1;
 
         System.out.println("Sampling with probability " + sampleProbability + " and importing data");
@@ -71,6 +71,8 @@ public class testFPGrowth {
 
                                 //Insert here PropertyFilters.binningColumns(prop) method
                                 */
+
+
                                 if (!PropertyFilters.rejectUselessAndFrequent(prop)) {
                                     transaction.add(prop);
                                 }

@@ -45,7 +45,7 @@ public class PropertyFilters {
     //delete items (=property) with useless or not interesting columns. This array has been built thanks to the
     //a-priori knowledge fo the dataset.
     private static final String[] uselessColumns = {"Age","AgeRecode12", "AgeRecode52", "AgeSubstitutionFlag", "AgeType",
-            "BridgedRaceFlag", "CurrentDataYear", "EducationReportingFlag","Education1989Revision", "HispanicOrigin", "HispanicOriginRaceRecode",
+            "BridgedRaceFlag", "CurrentDataYear", "EducationReportingFlag", "HispanicOrigin", "HispanicOriginRaceRecode",
             "Id", "InfantAgeRecode22", "InfantCauseRecode130", "RaceImputationFlag", "Race", /*"RaceRecode3"*/ "RaceRecode5"};
 
 
@@ -176,7 +176,7 @@ public class PropertyFilters {
     }
 
     //This constant array stores all the columns that need a binning process
-    private static final String[] binningColumns = {"AgeRecode27", "CauseRecode39"};
+    private static final String[] binningColumns = {"AgeRecode27", "CauseRecode39", "Education1989Revision"};
 
     private static final NavigableMap<Integer, String> AGE_MAP;
     static
@@ -196,19 +196,42 @@ public class PropertyFilters {
     static
     {
         NavigableMap<Integer, String> map = new TreeMap();
-        map.put(0, "ciao");    // 0..4     => 0
-        map.put(5, "ciao");    // 5..10    => 1
-        map.put(11, "dioboe");   // 11..200  => 2
+        map.put(1, "Infections caused (HIV, Tubercolosis and Sifilidis)");    // 1,2,3
+        map.put(5, "Malignant Neoplasm in some organ");    // (4 doesn't exist) 5..12
+        map.put(13, "Cancer");
+        map.put(14, "Leukemia");
+        map.put(15, "Malignant Neoplasm in some organ");
+        map.put(16, "Diabetis");
+        map.put(17, "Alzheimer");
+        map.put(20, "Heart disease"); //(18,19 don't exist) 20,21,22
+        map.put(23, "Endocrinal disease");
+        map.put(24, "Circoulatory system disease"); //24,25,26
+        map.put(27,"Influenza and pneuomonia");
+        map.put(28, "Breathing system disease");
+        map.put(29, "Gastroenterology disease (Peptic ulcer)");
+        map.put(30, "Nephrology disease"); //30,31
+        map.put(32, "Complicancies occured in perinatal period or Sudden Infant Death Syndrome");
+        map.put(33, "Congenital malformations, deformations and chromosomal abnormalities");
+        map.put(34, "Complicancies occured in perinatal period or Sudden Infant Death Syndrome");
+        map.put(35, "Other causes, different from diseases");
+        map.put(36, "Other diseases");
+        map.put(37,"Accident"); //37,38
+        map.put(39, "Suicide");
+        map.put(40,"Homicide");
+        map.put(41,"Other causes, different from diseases");
+
         CAUSE_MAP = Collections.unmodifiableNavigableMap(map);
     }
 
-    private static final NavigableMap<Integer, String> EDUREV_MAP;
+    private static final NavigableMap<Integer, String> EDUREV_MAP; //-> to be completed
     static
     {
         NavigableMap<Integer, String> map = new TreeMap();
-        map.put(0, "ciao");    // 0..4     => 0
-        map.put(5, "ciao");    // 5..10    => 1
-        map.put(11, "dioboe");   // 11..200  => 2
+        map.put(0, "8th grade or less");    // 0..8
+        map.put(9, "9 - 12th grade, no diploma");    // 9..11
+        map.put(13, "high school graduate or GED completed");
+        map.put(14, "some college credit, but no degree"); //14..16
+
         EDUREV_MAP = Collections.unmodifiableNavigableMap(map);
     }
 
@@ -233,76 +256,15 @@ public class PropertyFilters {
         }
         else if (colName.equals(binningColumns[1])) {
             int code = Integer.parseInt(valIndex);
-            newCol = "Binned Age";
+            newCol = "Death Category";
             newVal = CAUSE_MAP.floorEntry(code).getValue();
-
-            /*if(code == 28)
-            {Property binnedValue = new Property("DeathCategory","Respiratory diseases");
-                return binnedValue;}
-            else if (1 <= code <= 3)
-            {Property binnedValue = new Property("DeathCategory","Infections (Sifilidis, HIV, Tubercolosis included");
-                return binnedValue;}
-            else if (5 <= code <= 12 || code == 15)
-            {Property binnedValue = new Property("DeathCategory","Malignant Neoplasm in some organ");
-                return binnedValue;}
-            else if (code == 13)
-            {Property binnedValue = new Property("DeathCategory","Cancer");
-                return binnedValue;}
-            else if(code == 14)
-            {Property binnedValue = new Property("DeathCategory","Leukemia");
-                return binnedValue;}
-            else if(code == 16)
-            {Property binnedValue = new Property("DeathCategory","Diabetis");
-                return binnedValue;}
-            else if(code == 17)
-            {Property binnedValue = new Property("DeathCategory","Alzahimer");
-                return binnedValue;}
-            else if(20 <= code <= 22)
-            {Property binnedValue = new Property("DeathCategory","Heart disease");
-                return binnedValue;}
-            else if (code==23)
-            {Property binnedValue = new Property("DeathCategory","Endocrinal disease");
-                return binnedValue;}
-            else if(24 <= code <= 26)
-            {Property binnedValue = new Property("DeathCategory","Circolatory system");
-                return binnedValue;}
-            else if(code == 27)
-            {Property binnedValue = new Property("DeathCategory","Influenza and pneumonia");
-                return binnedValue;}
-            else if(code == 37 || code == 38)
-            {Property binnedValue = new Property("DeathCategory","Accident");
-                return binnedValue;}
-            else if (code == 39)
-            {Property binnedValue = new Property("DeathCategory","Suicide");
-                return binnedValue;}
-            else if (code == 40)
-            {Property binnedValue = new Property("DeathCategory","Homicide");
-                return binnedValue;}
-            else if (code == 35 || code == 41)
-            {Property binnedValue = new Property("DeathCategory","All other causes");
-                return binnedValue;}
-            else if (code == 36)
-            {Property binnedValue = new Property("DeathCategory","Other Diseases");
-                return binnedValue;}
-            else if (code == 29)
-            {Property binnedValue = new Property("DeathCategory","Gastroenterology disease (Peptic ulcer included)");
-                return binnedValue;}
-            else if (code == 30 || code == 31)
-            {Property binnedValue = new Property("DeathCategory","Nephrology disease");
-                return binnedValue;}
-            else if (code == 32 || code == 34)
-            {Property binnedValue = new Property("DeathCategory","Complicancies occured in perinatal period or Sudden Infant Death Syndrome");
-                return binnedValue;}
-            else (code == 33)
-            {Property binnedValue = new Property("DeathCategory","Congenital malformations, deformations and chromosomal abnormalities");
-             return binnedValue;}*/
         }
 
-        else if (colName.equals(binningColumns[1])) {
+        /*else if (colName.equals(binningColumns[2])) {
             int code = Integer.parseInt(valIndex);
-            newCol = "Binned Age";
-            newVal = CAUSE_MAP.floorEntry(code).getValue();
-        }
+            newCol = "Education";                           //How to call it? Should it be exactly: "Education2003Revision"?
+            newVal = EDUREV_MAP.floorEntry(code).getValue();
+        }*/
 
         return new Property(newCol, newVal);
     }
