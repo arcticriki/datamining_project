@@ -35,7 +35,7 @@ public class Analytics {
 
         String filename = "data/DeathRecords.csv";
         Broadcast<FieldDecoder> fd = sc.broadcast(new FieldDecoder());
-        double sampleProbability = 0.2;
+        double sampleProbability = 1;
 
         System.out.println("Sampling with probability " + sampleProbability + " and importing data");
 
