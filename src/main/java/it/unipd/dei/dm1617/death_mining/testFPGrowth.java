@@ -49,7 +49,8 @@ public class testFPGrowth {
                                 String columnContent = fields[i];
                                 Property prop = new Property(
                                         fd.value().decodeColumn(i),
-                                        fd.value().decodeValue(i,columnContent)
+                                        fd.value().decodeValue(i,columnContent),
+                                        columnContent
                                 );
 
                                 /*
