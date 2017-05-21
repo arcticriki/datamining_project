@@ -12,7 +12,7 @@ import java.util.*;
  *
  */
 
-public final class PropertyFilters {
+public class PropertyFilters {
 
     private PropertyFilters() {
     }
@@ -42,32 +42,45 @@ public final class PropertyFilters {
 
 
     //This constant array stores all the useless columns. It is used in preprocessing in order to
-    //delete items (=property) with useless or not interesting columns.
+    //delete items (=property) with useless or not interesting columns. This array has been built thanks to the
+    //a-priori knowledge fo the dataset.
     private static final String[] uselessColumns = {"Age","AgeRecode12", "AgeRecode52", "AgeSubstitutionFlag", "AgeType",
             "BridgedRaceFlag", "CurrentDataYear", "EducationReportingFlag","Education1989Revision", "HispanicOrigin", "HispanicOriginRaceRecode",
-            "Id", "InfantAgeRecode22", "InfantCauseRecode130", "RaceImputationFlag", "RaceRecode5", "RaceRecode3"};
+            "Id", "InfantAgeRecode22", "InfantCauseRecode130", "RaceImputationFlag", "Race", /*"RaceRecode3"*/ "RaceRecode5"};
 
 
     //This constant array stores all the couples used for preprocessing. A couple is inserted for each column
-    //that presents either useless/not interesting items' values or too much frequent values.
-    //In particular, these last ones produce dirty outputs both in frequent itemsets and in association rules
-    //computation, because they are repeated in several itemsets.
+    //that presents either useless or not interesting items' values. This array has been built thanks to the
+    //a-priori knowledge fo the dataset.
     private static final Couple[] uselessItems = {new Couple("ActivityCode", new String[] {"99", "Not applicable"}),
-            new Couple("Autopsy", new String[] {"n", "N", "U"}),
+            new Couple("Autopsy", new String[] {"n", "U"}),
             new Couple("DayOfTheWeekOfDeath", new String[] {"Unknown"}),
-            new Couple("Education1989Revision", new String[] {"No formal education"}),
             new Couple("InjuryAtWork", new String[] {"U"}),
-            new Couple("MannerOfDeath", new String[] {"Natural", "Not specified"}),
+            new Couple("MannerOfDeath", new String[] {"Not specified"}),
             new Couple("MaritalStatus", new String[] {"Marital Status unknown"}),
+            new Couple("MethodOfDisposition", new String[] {"Other", "null"}),
             new Couple("PlaceOfDeathAndDecedentsStatus", new String[] {"Place of death unknown"}),
-            new Couple("PlaceOfInjury", new String[] {"Unspecified place", "Other Specifided Places", "Causes other than W00-Y34"}),
-            new Couple("Race", new String[] {"White"}),
+            new Couple("PlaceOfInjury", new String[] {"Unspecified place", "Other Specifided Places"})
+    };
+
+
+    //This constant array stores all the couples used as a second-step preprocessing. After a first computation with
+    //rejectUseless() method, we obtained dirty outputs both in frequent itemsets and in association rules.
+    //This array has been built with a careful observation of the output and thanks to the Analytics class.
+    private static final Couple[] frequentItems = {new Couple("ActivityCode", new String[] {"Not applicable"}),
+            new Couple("Autopsy", new String[] {"N"}),
+            new Couple("Education1989Revision", new String[] {"No formal education"}),
+            new Couple("MannerOfDeath", new String[] {"Natural"}),
+            new Couple("PlaceOfInjury", new String[] {"Causes other than W00-Y34"}),
+            /*new Couple("Race", new String[] {"White"}),*/
+            new Couple("RaceRecode3", new String[] {"White"}),
             new Couple("ResidentStatus", new String[] {"RESIDENTS"})};
 
 
-    //Principal method used for preprocessing. Given an item (=property), it is declared as
+    //First method used for preprocessing. Given an item (=property), it is declared as
     //rejectable (=true output) by evaluating its attributes (=column and value) which are compared with
-    //the values stored in 'uselessColumns' and 'uselessItems'.
+    //the values stored in 'uselessColumns' and 'uselessItems'. This method uses a-priori knowledge of
+    //dataset's information.
     public static boolean rejectUseless(Property prop) {
         String column = prop.getColName();
         String value = prop.getClassName();
@@ -92,13 +105,42 @@ public final class PropertyFilters {
     }
 
 
+    //Second-step method used for preprocessing. Given an item (=property), it is declared as
+    //rejectable (=true output) by evaluating its attributes (=column and value) which are compared with
+    //the values stored in 'uselessColumns', 'uselessItems' and 'frequentItems'. This method uses a-posteriori knowledge
+    //of the output, which has been gained after a first computation based on rejectUseless() filtering.
+    //In particular, it rejects some too-much-frequent items that produce dirty output.
+    public static boolean rejectUselessAndFrequent(Property prop) {
+
+        //reject useless values
+        if(PropertyFilters.rejectUseless(prop)) return true;
+
+        String column = prop.getColName();
+        String value = prop.getClassName();
+
+        for (Couple c: frequentItems) {
+            String currentFrequentColumn = c.getReference();
+            String[] currentFrequentValues = c.getValues();
+
+            if (currentFrequentColumn.equals(column)) {
+                for (String currentUselessValue : currentFrequentValues) {
+                    if (currentUselessValue.equals(value)) return true;
+                }
+                break;
+            }
+        }
+
+        return false;
+    }
+
+
     //Auxiliar method used to perform additional filtering. It is particularly useful in case of a
     //computation of frequent itemsets and association rules which is limited to few specific columns.
     //This can be useful, for example, in order to compute fancy association rules like the one that involves Education and Autopsy.
     public static boolean rejectAdditionalColumns (Property prop, List<String> additionalUselessColumns) {
 
-        //Remove Properties with useless items
-        if (PropertyFilters.rejectUseless(prop)) return true;
+        //Remove Properties with useless and frequent items
+        if (PropertyFilters.rejectUselessAndFrequent(prop)) return true;
 
         String colName = prop.getColName();
 
@@ -115,8 +157,8 @@ public final class PropertyFilters {
     //This can be useful, for example, if we want to compute the association rules that involve only few specific classes of deseases.
     public static boolean rejectAdditionalValues (Property prop, List<Tuple2<String, List<String>>> additionalUselessValues) {
 
-        //Remove Properties with useless items
-        if (PropertyFilters.rejectUseless(prop)) return true;
+        //Remove Properties with useless and frequent items
+        if (PropertyFilters.rejectUselessAndFrequent(prop)) return true;
 
         String colName = prop.getColName();
         String colValue = prop.getClassName();
@@ -134,13 +176,14 @@ public final class PropertyFilters {
     }
 
 
+    /*
     //This constant array stores all the columns that need a binning process
     private static final String[] binningColumns = {"AgeRecode27", "CauseRecode39"};
 
     //Auxiliar method used for the binning. The information along some categories can be grouped into some
     //binned categories, for a better understanding of the results. In particular, the CauseRecoded39 has been
     //reduced to 20 possible death categories
-    public static Property binningProperties(Property prop)
+     public static Property binningProperties(Property prop)
     {
 
         String colName = prop.getColName();
@@ -235,7 +278,7 @@ public final class PropertyFilters {
 
         }
 
-    }
+    }*/
 
 
 }
