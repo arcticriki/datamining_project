@@ -9,12 +9,14 @@ import org.apache.spark.broadcast.Broadcast;
 import org.apache.spark.mllib.fpm.AssociationRules;
 import org.apache.spark.mllib.fpm.FPGrowth;
 import org.apache.spark.mllib.fpm.FPGrowthModel;
+import scala.Serializable;
 import scala.Tuple2;
 
 
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Random;
 
@@ -121,18 +123,25 @@ public class testJoin {
 
         // map association rules in a RDD of key-value pairs, where the key is the consequent of the rule and the value is the rule itself
         // the aim is to combine this RDD with the one previously computed to extract the support of the consequent itemset
-        JavaPairRDD<List<Property>, AssociationRules.Rule<Property>> rddConsequents = rules.mapToPair(r -> new Tuple2<>(r.javaConsequent(), r));
+        JavaPairRDD<List<Property>, AssociationRules.Rule<Property>> rddConsequents = rules
+                .mapToPair(r -> new Tuple2<>(r.javaConsequent(), r));
 
         System.out.println("Total rule count " + rules.count());
 
         // create PairRDD consisting of Rule and its Lift
-        JavaPairRDD<AssociationRules.Rule, Double> rddRuleLift = rddConsequents.join(rddFreqItemAndSupport).mapToPair(item ->{
-            AssociationRules.Rule<Property> rule = item._2._1;
-            Double consequentSupport = item._2._2;
-            return new Tuple2<>(rule, rule.confidence()/consequentSupport);
-        });
+        JavaPairRDD<AssociationRules.Rule, Double> rddRuleLift = rddConsequents
+                .join(rddFreqItemAndSupport)
+                .mapToPair(item ->{
+                    AssociationRules.Rule<Property> rule = item._2._1;
+                    Double consequentSupport = item._2._2;
+                    return new Tuple2<>(rule, rule.confidence()/consequentSupport);
+                })
+                .map(rule -> rule.swap())
+                .sortBy(rule -> rule._1(), false, 1)
+                .mapToPair(rule -> new Tuple2<>(rule._2(), rule._1()));
 
         // print rules and their lift
         rddRuleLift.foreach(r -> System.out.println(r._1 + " " + "Lift = " + r._2));
     }
+
 }

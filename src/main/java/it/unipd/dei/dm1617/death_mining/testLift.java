@@ -126,7 +126,8 @@ public class testLift {
                     double lift = conf / suppConseq;
                     return new Tuple2<>(rule, lift);
                 })
-                .filter(tuple -> (tuple._2 > 1+deltaLift || tuple._2 < 1-deltaLift));
+                .filter(tuple -> (tuple._2 > 1+deltaLift || tuple._2 < 1-deltaLift))
+                .sortBy(tuple -> tuple._2(), false, 1);
 
 
 
