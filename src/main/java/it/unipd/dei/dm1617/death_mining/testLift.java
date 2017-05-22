@@ -11,8 +11,13 @@ import org.apache.spark.mllib.fpm.FPGrowthModel;
 import scala.Tuple2;
 
 
+import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -34,34 +39,6 @@ public class testLift {
         double sampleProbability = 0.3;
         double minSup = 0.05;
 
-        //Randomly select interesting columns from file columns.csv
-        List<String> interestingColumns = new ArrayList<>();
-        Random rand = new Random();
-
-        try {
-            CSVReader reader = new CSVReader(new FileReader("data/columns.csv"));
-            String[] columns = reader.readNext();
-
-            for (String c: columns) {
-                int temp = rand.nextInt(2);
-                if (temp == 1) interestingColumns.add(c);
-            }
-        }
-        catch (IOException e){
-            e.printStackTrace();
-        }
-
-        /*
-        Save selected interesting columns in a txt file. Just for testing ;)
-
-        Path columnsFile = Paths.get("results/random_interestingColumns.txt");
-        try {
-            Files.write(columnsFile, interestingColumns, Charset.forName("UTF-8"));
-        }
-        catch (IOException e) {
-            e.printStackTrace();
-        }
-        */
 
         System.out.println("Sampling with probability " + sampleProbability + " and importing data");
 
@@ -77,10 +54,15 @@ public class testLift {
                                 String columnContent = fields[i];
                                 Property prop = new Property(
                                         fd.value().decodeColumn(i),
-                                        fd.value().decodeValue(i,columnContent)
+                                        fd.value().decodeValue(i,columnContent),
+                                        columnContent
                                 );
 
-                                if (!PropertyFilters.rejectByColumn(prop, interestingColumns)) {
+                                //Insert here PropertyFilters.binningColumns(prop) method
+                                prop = PropertyFilters.binningProperties(prop);
+
+                                // Excluding useless items and verifying that they are unique
+                                if (!PropertyFilters.rejectUselessAndFrequent(prop) && !transaction.contains(prop)) {
                                     transaction.add(prop);
                                 }
                             }
@@ -103,9 +85,33 @@ public class testLift {
                 .setNumPartitions(10);
         FPGrowthModel<Property> model = fpg.run(transactions);
 
-
         List<FPGrowth.FreqItemset<Property>> freqItemset = model.freqItemsets().toJavaRDD().collect();
 
+        ArrayList<String> outputLines = new ArrayList<>();
+        for (FPGrowth.FreqItemset<Property> itemset: freqItemset) {
+            String line = "[" + itemset.javaItems() + "], " + ((float) itemset.freq() / (float) transactionsCount);
+            System.out.println(line);
+            outputLines.add(line);
+        }
+
+        File directory = new File("results/");
+        if (! directory.exists()){
+            directory.mkdir();
+        }
+
+        // Writing output to a file
+        Path file = Paths.get("results/frequent-itemsets_Lift.txt");
+        try {
+            Files.write(file, outputLines, Charset.forName("UTF-8"));
+        }
+        catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        long end = System.currentTimeMillis();
+
+        System.out.println("[frequent itemsets] Elapsed time: " + ((end-import_data)/1000.0) + " s" );
+        outputLines.clear();
 
         double deltaLift = 0.1;
         JavaRDD<Tuple2<AssociationRules.Rule<Property>, Double>> rules = model.generateAssociationRules(0).toJavaRDD()
@@ -128,7 +134,6 @@ public class testLift {
                 })
                 .filter(tuple -> (tuple._2 > 1+deltaLift || tuple._2 < 1-deltaLift))
                 .sortBy(tuple -> tuple._2(), false, 1);
-
 
 
         List<Tuple2<AssociationRules.Rule<Property>, Double>> filterRules = rules.collect();
@@ -154,9 +159,18 @@ public class testLift {
 //            }
 //        }
 
-        for(Tuple2<AssociationRules.Rule<Property>, Double> filterRule : filterRules){
+        for (Tuple2<AssociationRules.Rule<Property>, Double> filterRule: filterRules) {
             String line = filterRule._1.javaAntecedent() + " => " + filterRule._1.javaConsequent() + " lift:" + filterRule._2;
             System.out.println(line);
+            outputLines.add(line);
+        }
+
+        file = Paths.get("results/association-rules_Lift.txt");
+        try {
+            Files.write(file, outputLines, Charset.forName("UTF-8"));
+        }
+        catch (IOException e) {
+            e.printStackTrace();
         }
 
 

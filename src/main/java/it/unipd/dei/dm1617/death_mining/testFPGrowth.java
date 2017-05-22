@@ -1,7 +1,6 @@
 package it.unipd.dei.dm1617.death_mining;
 
 
-import au.com.bytecode.opencsv.CSVReader;
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
@@ -11,7 +10,6 @@ import org.apache.spark.mllib.fpm.FPGrowth;
 import org.apache.spark.mllib.fpm.FPGrowthModel;
 
 import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
@@ -19,7 +17,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
 
 /**
  * Created by tonca on 05/05/17.
@@ -36,9 +33,8 @@ public class testFPGrowth {
         String filename = "data/DeathRecords.csv";
         Broadcast<FieldDecoder> fd = sc.broadcast(new FieldDecoder());
         double sampleProbability = 0.3;
-        double minSup = 0.2;
+        double minSup = 0.1;
 
-      
         System.out.println("Sampling with probability " + sampleProbability + " and importing data");
 
         JavaRDD<List<Property>> transactions = sc.textFile(filename)
@@ -48,15 +44,20 @@ public class testFPGrowth {
                             List<Property> transaction = new ArrayList<>();
                             String[] fields = line.split(",");
 
-                            for (int i = 0; i < fields.length; i++) {
+                            for (int i = 1; i < fields.length; i++) {
 
                                 String columnContent = fields[i];
                                 Property prop = new Property(
                                         fd.value().decodeColumn(i),
-                                        fd.value().decodeValue(i,columnContent)
+                                        fd.value().decodeValue(i,columnContent),
+                                        columnContent
                                 );
 
-                                if (!PropertyFilters.reject(prop)) {
+                                //Insert here PropertyFilters.binningColumns(prop) method
+                                prop = PropertyFilters.binningProperties(prop);
+
+                                // Excluding useless items and verifying that they are unique
+                                if (!PropertyFilters.rejectUselessAndFrequent(prop) && !transaction.contains(prop)) {
                                     transaction.add(prop);
                                 }
                             }
@@ -75,7 +76,7 @@ public class testFPGrowth {
         System.out.println("[read dataset] Elapsed time: "+ ((import_data-start)/1000.0) + " s" );
 
         /*
-        Save total transactions after filtering. Just for testing ;)
+        Save total transactions after filtering. Just for testing
 
         transactions.saveAsTextFile("C:\\Users\\Avvio\\Desktop\\datamining_project\\results\\transactions_rejectByColumn");
          */
@@ -98,7 +99,7 @@ public class testFPGrowth {
         }
 
         // Writing output to a file
-        Path file = Paths.get("results/frequent-itemsets_interestingColumns.txt");
+        Path file = Paths.get("results/frequent-itemsets_Confidence.txt");
         try {
             Files.write(file, outputLines, Charset.forName("UTF-8"));
         }
@@ -113,15 +114,19 @@ public class testFPGrowth {
         double minConfidence = 0.3;
         outputLines.clear();
         for (AssociationRules.Rule<Property> rule
-                : model.generateAssociationRules(minConfidence).toJavaRDD().collect()) {
-            if (rule.confidence() < 0.8) {
+                : model.generateAssociationRules(minConfidence)
+                .toJavaRDD()
+                .sortBy((rule) -> rule.confidence(), false, 1)
+                .collect())
+        {
+            if (rule.confidence() > 0.8) {
                 String line = rule.javaAntecedent() + " => " + rule.javaConsequent() + ", " + rule.confidence();
                 System.out.println(line);
                 outputLines.add(line);
             }
         }
 
-        file = Paths.get("results/association-rules_interestingColumns.txt");
+        file = Paths.get("results/association-rules_Confidence.txt");
         try {
             Files.write(file, outputLines, Charset.forName("UTF-8"));
         }

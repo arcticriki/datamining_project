@@ -82,10 +82,15 @@ public class testJoin {
                                 String columnContent = fields[i];
                                 Property prop = new Property(
                                         fd.value().decodeColumn(i),
-                                        fd.value().decodeValue(i,columnContent)
+                                        fd.value().decodeValue(i,columnContent),
+                                        columnContent
                                 );
 
-                                if (!PropertyFilters.rejectByColumn(prop, interestingColumns)) {
+                                //Insert here PropertyFilters.binningColumns(prop) method
+                                prop = PropertyFilters.binningProperties(prop);
+
+                                // Excluding useless items and verifying that they are unique
+                                if (!PropertyFilters.rejectUselessAndFrequent(prop) && !transaction.contains(prop)) {
                                     transaction.add(prop);
                                 }
                             }

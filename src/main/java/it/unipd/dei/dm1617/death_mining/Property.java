@@ -7,8 +7,16 @@ import scala.Tuple2;
  */
 public class Property extends Tuple2<String,String>{
 
+    private String classIndex;
+
     public Property(String colName, String className){
         super(colName, className);
+    }
+
+    public Property(String colName, String className, String classIndex){
+        super(colName, className);
+        this.classIndex = classIndex;
+
     }
 
     public String toString(){
@@ -24,5 +32,9 @@ public class Property extends Tuple2<String,String>{
     }
 
     public String getClassName() { return this._2; }
+
+    public String getClassIndex() {
+        return classIndex;
+    }
 
 }
