@@ -51,9 +51,6 @@ public class testAlternateConviction {
             e.printStackTrace();
         }
 
-
-
-
         /*
         Save selected interesting columns in a txt file. Just for testing ;)
 
@@ -70,32 +67,30 @@ public class testAlternateConviction {
 
         JavaRDD<List<Property>> transactions = sc.textFile(filename)
                 .sample(false, sampleProbability)
-                .map(
-                        line -> {
-                            List<Property> transaction = new ArrayList<>();
-                            String[] fields = line.split(",");
+                .map(line -> {
+                        List<Property> transaction = new ArrayList<>();
+                        String[] fields = line.split(",");
 
-                            for (int i = 0; i < fields.length; i++) {
+                        for (int i = 0; i < fields.length; i++) {
 
-                                String columnContent = fields[i];
-                                Property prop = new Property(
-                                        fd.value().decodeColumn(i),
-                                        fd.value().decodeValue(i,columnContent),
-                                        columnContent
-                                );
+                            String columnContent = fields[i];
+                            Property prop = new Property(
+                                    fd.value().decodeColumn(i),
+                                    fd.value().decodeValue(i,columnContent),
+                                    columnContent
+                            );
 
-                                //Insert here PropertyFilters.binningColumns(prop) method
-                                prop = PropertyFilters.binningProperties(prop);
+                            //Insert here PropertyFilters.binningColumns(prop) method
+                            prop = PropertyFilters.binningProperties(prop);
 
-                                // Excluding useless items and verifying that they are unique
-                                if (!PropertyFilters.rejectUselessAndFrequent(prop) && !transaction.contains(prop)) {
-                                    transaction.add(prop);
-                                }
+                            // Excluding useless items and verifying that they are unique
+                            if (!PropertyFilters.rejectUselessAndFrequent(prop) && !transaction.contains(prop)) {
+                                transaction.add(prop);
                             }
-
-                            return transaction;
                         }
-                );
+
+                        return transaction;
+                    });
 
         long transactionsCount = transactions.count();
         //transactions.map(t ->  t.stream().filter(p -> !p.getValue().equals("0")).collect(Collectors.toList()));
@@ -129,14 +124,21 @@ public class testAlternateConviction {
         JavaPairRDD<List<Property>, AssociationRules.Rule<Property>> rddConsequents = rules.mapToPair(r -> new Tuple2<>(r.javaConsequent(), r));
 
         // create PairRDD consisting of Rule and its Lift
-        JavaPairRDD<AssociationRules.Rule<Property>, Double> rddRuleConviction = rddConsequents.join(rddFreqItemAndSupport).mapToPair(item ->{
-            // the result of the join in a PairRDD with key=consequent and value = <rule, Ysupport>
-            AssociationRules.Rule<Property> rule = item._2._1;
-            Double YSupport = item._2._2;
-            Double conviction = (1 - YSupport) / (1 - rule.confidence());
-            return new Tuple2<>(rule, conviction);
-        });
+        JavaPairRDD<AssociationRules.Rule<Property>, Double> rddRuleConviction = rddConsequents
+                .join(rddFreqItemAndSupport)
+                .mapToPair(item ->{
+                    // the result of the join in a PairRDD with key=consequent and value = <rule, Ysupport>
+                    AssociationRules.Rule<Property> rule = item._2._1;
+                    Double YSupport = item._2._2;
+                    Double conviction = (1 - YSupport) / (1 - rule.confidence());
+                    return new Tuple2<>(conviction, rule);
+                })
+                .sortByKey(false, 1)
+                .mapToPair(i -> i.swap());
 
-        rddRuleConviction.foreach(i -> System.out.println(i + ", Conviction: " + i._2));
+        int K = 20;
+        rddRuleConviction
+                .take(K)
+                .forEach(i -> System.out.println(i._1 + ", Conviction: " + i._2));
     }
 }
