@@ -44,9 +44,33 @@ public class PropertyFilters {
     //This constant array stores all the useless columns. It is used in preprocessing in order to
     //delete items (=property) with useless or not interesting columns. This array has been built thanks to the
     //a-priori knowledge fo the dataset.
-    private static final String[] uselessColumns = {"Age","AgeRecode12", "AgeRecode52", "AgeSubstitutionFlag", "AgeType",
-            "BridgedRaceFlag", "CurrentDataYear", "EducationReportingFlag", "HispanicOrigin", "HispanicOriginRaceRecode",
-            "Id", "InfantAgeRecode22", "InfantCauseRecode130", "RaceImputationFlag", "Race", /*"RaceRecode3"*/ "RaceRecode5"};
+    private static final String[] uselessColumns = {
+            "Id",
+            "Education1989Revision",
+            "Education2003Revision",
+            "EducationReportingFlag",
+            "AgeType",
+            "Age",
+            "AgeSubstitutionFlag",
+            "AgeRecode52",
+            "AgeRecode27",
+            "AgeRecode12",
+            "InfantAgeRecode22",
+            "CurrentDataYear",
+            "Icd10Code",
+            "CauseRecode358",
+            "CauseRecode113",
+            "InfantCauseRecode130",
+            "CauseRecode39",
+            "NumberOfEntityAxisConditions",
+            "NumberOfRecordAxisConditions",
+            "Race",
+            "BridgedRaceFlag",
+            "RaceImputationFlag",
+            "RaceRecode5",
+            "HispanicOrigin",
+            "HispanicOriginRaceRecode"
+    };
 
 
     //This constant array stores all the couples used for preprocessing. A couple is inserted for each column
@@ -176,7 +200,7 @@ public class PropertyFilters {
     }
 
     //This constant array stores all the columns that need a binning process
-    private static final String[] binningColumns = {"AgeRecode27", "CauseRecode39", "Education1989Revision"};
+    private static final String[] binningColumns = {"AgeRecode27", "CauseRecode39", "Education1989Revision", "Education2003Revision"};
 
     private static final NavigableMap<Integer, String> AGE_MAP;
     static
@@ -230,7 +254,7 @@ public class PropertyFilters {
         map.put(0, "8th grade or less");    // 0..8
         map.put(9, "9 - 12th grade, no diploma");    // 9..11
         map.put(13, "high school graduate or GED completed");
-        map.put(14, "some college credit, but no degree"); //14..16
+        map.put(14, "some college credit"); //14..16
 
         EDUREV_MAP = Collections.unmodifiableNavigableMap(map);
     }
@@ -242,10 +266,11 @@ public class PropertyFilters {
     {
 
         String colName = prop.getColName();
+        String className = prop.getClassName();
         String valIndex = prop.getClassIndex();
 
-        String newCol = "BINNING ERROR!";
-        String newVal = "BINNING ERROR!";
+        String newCol = colName;
+        String newVal = className;
         if (colName.equals(binningColumns[0])) //Binning the age
         {
 
@@ -259,12 +284,15 @@ public class PropertyFilters {
             newCol = "Death Category";
             newVal = CAUSE_MAP.floorEntry(code).getValue();
         }
-
-        /*else if (colName.equals(binningColumns[2])) {
+        else if (colName.equals(binningColumns[2])) {
             int code = Integer.parseInt(valIndex);
             newCol = "Education";                           //How to call it? Should it be exactly: "Education2003Revision"?
             newVal = EDUREV_MAP.floorEntry(code).getValue();
-        }*/
+        }
+        else if (colName.equals(binningColumns[3])) {
+            newCol = "Education";
+            newVal = className;
+        }
 
         return new Property(newCol, newVal);
     }

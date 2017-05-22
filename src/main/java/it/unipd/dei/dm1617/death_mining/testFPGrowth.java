@@ -53,27 +53,12 @@ public class testFPGrowth {
                                         columnContent
                                 );
 
-                                /*
-                                //This computation is performed in order to make easier the binning of the column Age.
-                                //AgeType is relevant because it expresses the measure unit of the values in Age.
-                                //E.g.: (Age, 17) -> (Age, 17,year) then binning produces (Age, Teenager)
-                                //If a similar situation will happen when considering other columns, I suggest an analog solution.
-                                if (prop.getColName().equals("Age")){
-                                    for (int k = 0; k < fields.length; k++) {
-                                        if (fd.value().decodeColumn(k).equals("AgeType")) {
-                                            String measure = fd.value().decodeValue(k, "AgeType");
-                                            measure = prop.getClassName()+","+measure;
-                                            prop = new Property( prop.getColName(), measure);
-                                            break;
-                                        }
-                                    }
-                                }
 
                                 //Insert here PropertyFilters.binningColumns(prop) method
-                                */
+                                prop = PropertyFilters.binningProperties(prop);
 
-
-                                if (!PropertyFilters.rejectUselessAndFrequent(prop)) {
+                                // Excluding useless items and verifying that they are unique
+                                if (!PropertyFilters.rejectUselessAndFrequent(prop) && !transaction.contains(prop)) {
                                     transaction.add(prop);
                                 }
                             }
@@ -130,8 +115,12 @@ public class testFPGrowth {
         double minConfidence = 0.3;
         outputLines.clear();
         for (AssociationRules.Rule<Property> rule
-                : model.generateAssociationRules(minConfidence).toJavaRDD().collect()) {
-            if (rule.confidence() < 0.8) {
+                : model.generateAssociationRules(minConfidence)
+                .toJavaRDD()
+                .sortBy((rule) -> rule.confidence(), false, 1)
+                .collect())
+        {
+            if (rule.confidence() > 0.8) {
                 String line = rule.javaAntecedent() + " => " + rule.javaConsequent() + ", " + rule.confidence();
                 System.out.println(line);
                 outputLines.add(line);

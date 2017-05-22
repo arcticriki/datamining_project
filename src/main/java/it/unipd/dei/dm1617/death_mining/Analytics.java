@@ -23,8 +23,6 @@ import java.util.*;
  *
  * This is a class for generic statistical analysis of the dataset
  *
- *
- *
  */
 public class Analytics {
 
@@ -52,10 +50,18 @@ public class Analytics {
 
                                 Property prop = new Property(
                                         fd.value().decodeColumn(i),
-                                        fd.value().decodeValue(i,columnContent)
+                                        fd.value().decodeValue(i,columnContent),
+                                        columnContent
                                 );
 
-                                transaction.add(prop);
+                                //Insert here PropertyFilters.binningColumns(prop) method
+                                prop = PropertyFilters.binningProperties(prop);
+
+                                // Excluding useless items and verifying that they are unique
+                                if (!PropertyFilters.rejectUselessAndFrequent(prop) && !transaction.contains(prop)) {
+                                    transaction.add(prop);
+                                }
+
                             }
 
                             return transaction;
@@ -79,14 +85,14 @@ public class Analytics {
                 })
                 .collect();
 
-
-        File directory = new File("results/stats/");
+        String dirName = "results/stats_preprocessing/";
+        File directory = new File(dirName);
         if (! directory.exists()){
             directory.mkdirs();
         }
         for(Tuple2<String,ArrayList<String>> colList : outputs ) {
 
-            Path file = Paths.get("results/stats/"+colList._1()+"_stats.txt");
+            Path file = Paths.get(dirName+colList._1()+"_stats.txt");
             try {
                 Files.write(file, colList._2(), Charset.forName("UTF-8"));
             }
