@@ -8,6 +8,7 @@ import org.apache.spark.broadcast.Broadcast;
 import org.apache.spark.mllib.fpm.AssociationRules;
 import org.apache.spark.mllib.fpm.FPGrowth;
 import org.apache.spark.mllib.fpm.FPGrowthModel;
+import org.codehaus.janino.Java;
 
 import java.io.File;
 import java.io.IOException;
@@ -23,21 +24,13 @@ import java.util.List;
  */
 public class testFPGrowth {
 
-    public static void main(String[] args) {
+    private static JavaRDD<List<Property>> dataImport(JavaSparkContext sc, String filename, double sampleProbability) {
 
-        long start = System.currentTimeMillis();
-
-        SparkConf sparkConf = new SparkConf(true).setAppName("Frequent itemsets mining");
-        JavaSparkContext sc = new JavaSparkContext(sparkConf);
-
-        String filename = "data/DeathRecords.csv";
         Broadcast<FieldDecoder> fd = sc.broadcast(new FieldDecoder());
-        double sampleProbability = 0.3;
-        double minSup = 0.1;
 
         System.out.println("Sampling with probability " + sampleProbability + " and importing data");
 
-        JavaRDD<List<Property>> transactions = sc.textFile(filename)
+        return sc.textFile(filename)
                 .sample(false, sampleProbability)
                 .map(
                         line -> {
@@ -65,9 +58,22 @@ public class testFPGrowth {
                             return transaction;
                         }
                 );
+    }
+
+    public static void main(String[] args) {
+
+        long start = System.currentTimeMillis();
+
+        SparkConf sparkConf = new SparkConf(true).setAppName("Frequent itemsets mining");
+        JavaSparkContext sc = new JavaSparkContext(sparkConf);
+
+        String filename = "data/DeathRecords.csv";
+        double sampleProbability = 0.3;
+        double minSup = 0.1;
+
+        JavaRDD<List<Property>> transactions = dataImport(sc, filename, sampleProbability);
 
         long transactionsCount = transactions.count();
-        //transactions.map(t ->  t.stream().filter(p -> !p.getValue().equals("0")).collect(Collectors.toList()));
 
         System.out.println("Number of transactions after sampling: " + transactionsCount);
 
@@ -75,29 +81,23 @@ public class testFPGrowth {
 
         System.out.println("[read dataset] Elapsed time: "+ ((import_data-start)/1000.0) + " s" );
 
-        /*
-        Save total transactions after filtering. Just for testing
-
-        transactions.saveAsTextFile("C:\\Users\\Avvio\\Desktop\\datamining_project\\results\\transactions_rejectByColumn");
-         */
-
+        // FREQUENT ITEMSETS MINING
         FPGrowth fpg = new FPGrowth()
                 .setMinSupport(minSup)
                 .setNumPartitions(10);
         FPGrowthModel<Property> model = fpg.run(transactions);
 
+        // OUTPUT FREQUENT ITEMSETS
         ArrayList<String> outputLines = new ArrayList<>();
         for (FPGrowth.FreqItemset<Property> itemset: model.freqItemsets().toJavaRDD().collect()) {
             String line = "[" + itemset.javaItems() + "], " + ((float) itemset.freq() / (float) transactionsCount);
             System.out.println(line);
             outputLines.add(line);
         }
-        
         File directory = new File("results/");
         if (! directory.exists()){
             directory.mkdir();
         }
-
         // Writing output to a file
         Path file = Paths.get("results/frequent-itemsets_Confidence.txt");
         try {
@@ -111,6 +111,7 @@ public class testFPGrowth {
 
         System.out.println("[frequent itemsets] Elapsed time: " + ((end-import_data)/1000.0) + " s" );
 
+        // ASSOCIATION RULES MINING
         double minConfidence = 0.3;
         outputLines.clear();
         for (AssociationRules.Rule<Property> rule
@@ -126,6 +127,7 @@ public class testFPGrowth {
             }
         }
 
+        // OUTPUT ASSOCIATION RULES
         file = Paths.get("results/association-rules_Confidence.txt");
         try {
             Files.write(file, outputLines, Charset.forName("UTF-8"));
