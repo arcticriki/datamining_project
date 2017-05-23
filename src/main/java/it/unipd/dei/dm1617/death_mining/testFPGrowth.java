@@ -23,100 +23,18 @@ import java.util.List;
  */
 public class testFPGrowth {
 
-    private static JavaRDD<List<Property>> dataImport(JavaSparkContext sc, String filename, double sampleProbability) {
-
-        Broadcast<FieldDecoder> fd = sc.broadcast(new FieldDecoder());
-
-        System.out.println("Sampling with probability " + sampleProbability + " and importing data");
-
-        return sc.textFile(filename)
-                .sample(false, sampleProbability)
-                .map(
-                        line -> {
-                            List<Property> transaction = new ArrayList<>();
-                            String[] fields = line.split(",");
-
-                            for (int i = 1; i < fields.length; i++) {
-
-                                String columnContent = fields[i];
-                                Property prop = new Property(
-                                        fd.value().decodeColumn(i),
-                                        fd.value().decodeValue(i,columnContent),
-                                        columnContent
-                                );
-
-                                //Insert here PropertyFilters.binningColumns(prop) method
-                                prop = PropertyFilters.binningProperties(prop);
-
-                                // Excluding useless items and verifying that they are unique
-                                if (!PropertyFilters.rejectUselessAndFrequent(prop) && !transaction.contains(prop)) {
-                                    transaction.add(prop);
-                                }
-                            }
-
-                            return transaction;
-                        }
-                );
-    }
 
     public static void main(String[] args) {
-
-        long start = System.currentTimeMillis();
 
         SparkConf sparkConf = new SparkConf(true).setAppName("Frequent itemsets mining");
         JavaSparkContext sc = new JavaSparkContext(sparkConf);
 
-        String filename = "data/DeathRecords.csv";
-        double sampleProbability = 0.01;
-        double minSup = 0.1;
 
-        JavaRDD<List<Property>> transactions = dataImport(sc, filename, sampleProbability);
+        JavaRDD<List<Property>> transactions = sc.objectFile("results/preprocessed/out");
 
         long transactionsCount = transactions.count();
 
-        List<List<Property>> transaks = transactions.collect();
-        String folder = "results";
-        filename = "preprocessed_data";
-        OutputStream outputStream = null;
-        FileInputStream fis = null;
-        try{
-
-            File file = new File(folder, filename);
-            outputStream = new FileOutputStream(file);
-
-            ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-
-            ObjectOutputStream oos = new ObjectOutputStream(buffer);
-
-            oos.writeObject(transaks);
-
-            byte[] byteArray = buffer.toByteArray();
-
-            outputStream.write(byteArray);
-
-            fis = new FileInputStream(file);
-
-            ObjectInputStream ois = new ObjectInputStream(new BufferedInputStream(fis));
-            transaks = (List<List<Property>>) ois.readObject();
-
-            fis.close();
-            outputStream.close();
-
-        }
-        catch(IOException e){
-            System.err.println("ERORE");
-        }
-        catch(ClassNotFoundException e) {
-            System.err.println("ERORE");
-        }
-
-        transactions = sc.parallelize(transaks);
-
-        System.out.println("Number of transactions after sampling: " + transactionsCount);
-
-        long import_data = System.currentTimeMillis();
-
-        System.out.println("[read dataset] Elapsed time: "+ ((import_data-start)/1000.0) + " s" );
+        double minSup = 0.1;
 
         // FREQUENT ITEMSETS MINING
         FPGrowth fpg = new FPGrowth()
@@ -144,9 +62,6 @@ public class testFPGrowth {
             e.printStackTrace();
         }
 
-        long end = System.currentTimeMillis();
-
-        System.out.println("[frequent itemsets] Elapsed time: " + ((end-import_data)/1000.0) + " s" );
 
         // ASSOCIATION RULES MINING
         double minConfidence = 0.3;
