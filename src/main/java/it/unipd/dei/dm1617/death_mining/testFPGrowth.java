@@ -10,8 +10,7 @@ import org.apache.spark.mllib.fpm.FPGrowth;
 import org.apache.spark.mllib.fpm.FPGrowthModel;
 import org.codehaus.janino.Java;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -68,12 +67,50 @@ public class testFPGrowth {
         JavaSparkContext sc = new JavaSparkContext(sparkConf);
 
         String filename = "data/DeathRecords.csv";
-        double sampleProbability = 0.3;
+        double sampleProbability = 0.01;
         double minSup = 0.1;
 
         JavaRDD<List<Property>> transactions = dataImport(sc, filename, sampleProbability);
 
         long transactionsCount = transactions.count();
+
+        List<List<Property>> transaks = transactions.collect();
+        String folder = "results";
+        filename = "preprocessed_data";
+        OutputStream outputStream = null;
+        FileInputStream fis = null;
+        try{
+
+            File file = new File(folder, filename);
+            outputStream = new FileOutputStream(file);
+
+            ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+
+            ObjectOutputStream oos = new ObjectOutputStream(buffer);
+
+            oos.writeObject(transaks);
+
+            byte[] byteArray = buffer.toByteArray();
+
+            outputStream.write(byteArray);
+
+            fis = new FileInputStream(file);
+
+            ObjectInputStream ois = new ObjectInputStream(new BufferedInputStream(fis));
+            transaks = (List<List<Property>>) ois.readObject();
+
+            fis.close();
+            outputStream.close();
+
+        }
+        catch(IOException e){
+            System.err.println("ERORE");
+        }
+        catch(ClassNotFoundException e) {
+            System.err.println("ERORE");
+        }
+
+        transactions = sc.parallelize(transaks);
 
         System.out.println("Number of transactions after sampling: " + transactionsCount);
 
