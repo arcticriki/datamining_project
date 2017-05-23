@@ -76,13 +76,14 @@ public class PropertyFilters {
     //This constant array stores all the couples used for preprocessing. A couple is inserted for each column
     //that presents either useless or not interesting items' values. This array has been built thanks to the
     //a-priori knowledge fo the dataset.
-    private static final Couple[] uselessItems = {new Couple("ActivityCode", new String[] {"99", "Not applicable"}),
+    private static final Couple[] uselessItems = {
+            new Couple("ActivityCode", new String[] {"99", "Not applicable", "During unspecified activity"}),
             new Couple("Autopsy", new String[] {"n", "U"}),
             new Couple("DayOfTheWeekOfDeath", new String[] {"Unknown"}),
             new Couple("InjuryAtWork", new String[] {"U"}),
             new Couple("MannerOfDeath", new String[] {"Not specified"}),
             new Couple("MaritalStatus", new String[] {"Marital Status unknown"}),
-            new Couple("MethodOfDisposition", new String[] {"Other", "null"}),
+            new Couple("MethodOfDisposition", new String[] {"Other", "null", "Unknown"}),
             new Couple("PlaceOfDeathAndDecedentsStatus", new String[] {"Place of death unknown"}),
             new Couple("PlaceOfInjury", new String[] {"Unspecified place", "Other Specifided Places"})
     };
@@ -96,8 +97,9 @@ public class PropertyFilters {
             new Couple("Education1989Revision", new String[] {"No formal education"}),
             new Couple("MannerOfDeath", new String[] {"Natural"}),
             new Couple("PlaceOfInjury", new String[] {"Causes other than W00-Y34"}),
-            /*new Couple("Race", new String[] {"White"}),*/
+            //new Couple("Race", new String[] {"White"}),
             new Couple("RaceRecode3", new String[] {"White"}),
+            //new Couple("InjuryAtWork", new String[] {"N"}),
             new Couple("ResidentStatus", new String[] {"RESIDENTS"})};
 
 
