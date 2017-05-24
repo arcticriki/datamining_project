@@ -16,6 +16,7 @@ import java.util.Map;
  * Created by tonca on 23/05/17.
  */
 public class Preprocessing {
+
     private static JavaRDD<List<Property>> dataImport(JavaSparkContext sc, String filename, double sampleProbability) {
 
         Broadcast<FieldDecoder> fd = sc.broadcast(new FieldDecoder());
@@ -42,7 +43,7 @@ public class Preprocessing {
                         prop = PropertyFilters.binningProperties(prop);
 
                         // Excluding useless items and verifying that they are unique
-                        if (!PropertyFilters.rejectUselessAndFrequent(prop) && !transaction.contains(prop)) {
+                        if (!PropertyFilters.rejectUseless(prop) && !transaction.contains(prop)) {
                             transaction.add(prop);
                         }
                     }
@@ -62,7 +63,7 @@ public class Preprocessing {
         JavaSparkContext sc = new JavaSparkContext(sparkConf);
 
         String filename = "data/DeathRecords.csv";
-        double sampleProbability = 1;
+        double sampleProbability = 0.3;
 
         JavaRDD<List<Property>> transactions = dataImport(sc, filename, sampleProbability);
 

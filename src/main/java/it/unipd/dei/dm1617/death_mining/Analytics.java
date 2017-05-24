@@ -52,7 +52,7 @@ public class Analytics {
                 })
                 .collect();
 
-        String dirName = "results/stats_preprocessing/";
+        String dirName = "results/stats/";
         File directory = new File(dirName);
 
         if (! directory.exists()){

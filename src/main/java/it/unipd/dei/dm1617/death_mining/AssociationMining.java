@@ -32,6 +32,19 @@ public class AssociationMining {
         // Import preprocessed data
         JavaRDD<List<Property>> transactions = sc.objectFile("results/preprocessed");
 
+        // Removing too frequent items
+        transactions = transactions.map(
+                itemset -> {
+                    List<Property> newSet = new ArrayList<>();
+                    for(Property item : itemset) {
+                        if (!PropertyFilters.rejectUselessAndFrequent(item)) {
+                            newSet.add(item);
+                        }
+                    }
+                    return newSet;
+                }
+        );
+
         long transactionsCount = transactions.count();
 
         double minSup = 0.1;
