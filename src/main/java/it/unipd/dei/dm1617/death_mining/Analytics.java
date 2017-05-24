@@ -26,6 +26,7 @@ import java.util.*;
  *
  *
  */
+
 public class Analytics {
 
     public static void main(String[] args) {
@@ -33,42 +34,8 @@ public class Analytics {
         SparkConf sparkConf = new SparkConf(true).setAppName("Frequent itemsets mining");
         JavaSparkContext sc = new JavaSparkContext(sparkConf);
 
-        String filename = "data/DeathRecords.csv";
-        Broadcast<FieldDecoder> fd = sc.broadcast(new FieldDecoder());
-        double sampleProbability = 1;
+        JavaRDD<List<Property>> transactions = sc.objectFile("results/preprocessed");
 
-        System.out.println("Sampling with probability " + sampleProbability + " and importing data");
-
-        JavaRDD<List<Property>> transactions = sc.textFile(filename)
-                .sample(false, sampleProbability)
-                .map(
-                        line -> {
-                            List<Property> transaction = new ArrayList<>();
-                            String[] fields = line.split(",");
-
-                            for (int i = 0; i < fields.length; i++) {
-
-                                String columnContent = fields[i];
-
-                                Property prop = new Property(
-                                        fd.value().decodeColumn(i),
-                                        fd.value().decodeValue(i,columnContent),
-                                        columnContent
-                                );
-
-                                //Insert here PropertyFilters.binningColumns(prop) method
-                                prop = PropertyFilters.binningProperties(prop);
-
-                                // Excluding useless items and verifying that they are unique
-                                if (!PropertyFilters.rejectUselessAndFrequent(prop) && !transaction.contains(prop)) {
-                                    transaction.add(prop);
-                                }
-
-                            }
-
-                            return transaction;
-                        }
-                );
         long transactionsCount = transactions.count();
         Broadcast<Long> bCount = sc.broadcast(transactionsCount);
 
