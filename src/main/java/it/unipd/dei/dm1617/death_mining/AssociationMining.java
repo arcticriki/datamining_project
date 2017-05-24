@@ -21,7 +21,7 @@ import java.util.List;
 /**
  * Created by tonca on 05/05/17.
  */
-public class testFPGrowth {
+public class AssociationMining {
 
 
     public static void main(String[] args) {
@@ -29,8 +29,8 @@ public class testFPGrowth {
         SparkConf sparkConf = new SparkConf(true).setAppName("Frequent itemsets mining");
         JavaSparkContext sc = new JavaSparkContext(sparkConf);
 
-
-        JavaRDD<List<Property>> transactions = sc.objectFile("results/preprocessed/out");
+        // Import preprocessed data
+        JavaRDD<List<Property>> transactions = sc.objectFile("results/preprocessed");
 
         long transactionsCount = transactions.count();
 
@@ -44,6 +44,7 @@ public class testFPGrowth {
 
         // OUTPUT FREQUENT ITEMSETS
         ArrayList<String> outputLines = new ArrayList<>();
+
         for (FPGrowth.FreqItemset<Property> itemset: model.freqItemsets().toJavaRDD().collect()) {
             String line = "[" + itemset.javaItems() + "], " + ((float) itemset.freq() / (float) transactionsCount);
             System.out.println(line);
@@ -63,7 +64,7 @@ public class testFPGrowth {
         }
 
 
-        // ASSOCIATION RULES MINING
+        // ASSOCIATION RULES MINING (all metrics)
         double minConfidence = 0.3;
         outputLines.clear();
         for (AssociationRules.Rule<Property> rule

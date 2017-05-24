@@ -1,5 +1,6 @@
 package it.unipd.dei.dm1617.death_mining;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
@@ -22,33 +23,33 @@ public class Preprocessing {
         System.out.println("Sampling with probability " + sampleProbability + " and importing data");
 
         return sc.textFile(filename)
-                .sample(false, sampleProbability)
-                .map(
-                        line -> {
-                            List<Property> transaction = new ArrayList<>();
-                            String[] fields = line.split(",");
+            .sample(false, sampleProbability)
+            .map(
+                line -> {
+                    List<Property> transaction = new ArrayList<>();
+                    String[] fields = line.split(",");
 
-                            for (int i = 1; i < fields.length; i++) {
+                    for (int i = 1; i < fields.length; i++) {
 
-                                String columnContent = fields[i];
-                                Property prop = new Property(
-                                        fd.value().decodeColumn(i),
-                                        fd.value().decodeValue(i,columnContent),
-                                        columnContent
-                                );
+                        String columnContent = fields[i];
+                        Property prop = new Property(
+                            fd.value().decodeColumn(i),
+                            fd.value().decodeValue(i,columnContent),
+                            columnContent
+                        );
 
-                                //Insert here PropertyFilters.binningColumns(prop) method
-                                prop = PropertyFilters.binningProperties(prop);
+                        //Insert here PropertyFilters.binningColumns(prop) method
+                        prop = PropertyFilters.binningProperties(prop);
 
-                                // Excluding useless items and verifying that they are unique
-                                if (!PropertyFilters.rejectUselessAndFrequent(prop) && !transaction.contains(prop)) {
-                                    transaction.add(prop);
-                                }
-                            }
-
-                            return transaction;
+                        // Excluding useless items and verifying that they are unique
+                        if (!PropertyFilters.rejectUselessAndFrequent(prop) && !transaction.contains(prop)) {
+                            transaction.add(prop);
                         }
-                );
+                    }
+
+                    return transaction;
+                }
+            );
 
     }
 
@@ -67,14 +68,14 @@ public class Preprocessing {
 
         long transactionsCount = transactions.count();
 
-        String outputDirName = "results/preprocessed/out";
-        File outputDirectory = new File(outputDirName);
-        while (outputDirectory.exists()) {
-            outputDirName = outputDirName+"_";
-            outputDirectory = new File(outputDirName);
+        String outputDirName = "results/preprocessed";
+        File outputDir = new File(outputDirName);
+        try {
+            FileUtils.deleteDirectory(outputDir);
         }
-        transactions.saveAsObjectFile(outputDirName);
+        catch(IOException e) {}
 
+        transactions.saveAsObjectFile(outputDirName);
 
         System.out.println("Number of transactions after sampling: " + transactionsCount);
 
