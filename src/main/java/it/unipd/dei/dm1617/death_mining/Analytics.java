@@ -23,8 +23,6 @@ import java.util.*;
  *
  * This is a class for generic statistical analysis of the dataset
  *
- *
- *
  */
 
 public class Analytics {
@@ -47,7 +45,7 @@ public class Analytics {
                 .map((item) -> {
                     ArrayList<String> lines = new ArrayList<>();
                     for( Tuple2<Property,Integer> counted : item._2()) {
-                        String line = counted._1() + ", " + ((float)counted._2()/bCount.value());
+                        String line = counted._1().toString().replace(",","") + "," + ((float)counted._2()/bCount.value());
                         lines.add(line);
                     }
                     return new Tuple2<>(item._1(),lines);
@@ -62,7 +60,7 @@ public class Analytics {
         }
         for(Tuple2<String,ArrayList<String>> colList : outputs ) {
 
-            Path file = Paths.get(dirName+colList._1()+"_stats.txt");
+            Path file = Paths.get(dirName+colList._1()+"_stats.csv");
 
             try {
                 Files.write(file, colList._2(), Charset.forName("UTF-8"));
