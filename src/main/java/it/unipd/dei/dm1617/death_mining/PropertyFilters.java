@@ -202,7 +202,13 @@ public class PropertyFilters {
     }
 
     //This constant array stores all the columns that need a binning process
-    private static final String[] binningColumns = {"AgeRecode27", "CauseRecode39", "Education1989Revision", "Education2003Revision"};
+    private static final String[] binningColumns = {
+            "AgeRecode27",
+            "CauseRecode39",
+            "Education1989Revision",
+            "Education2003Revision",
+            "Autopsy"
+    };
 
     private static final NavigableMap<Integer, String> AGE_MAP;
     static
@@ -294,6 +300,10 @@ public class PropertyFilters {
         else if (colName.equals(binningColumns[3])) {
             newCol = "Education";
             newVal = className;
+        }
+        else if (colName.equals(binningColumns[4]) && className.equals("y")) {
+            newCol = colName;
+            newVal = "Y";
         }
 
         return new Property(newCol, newVal);
