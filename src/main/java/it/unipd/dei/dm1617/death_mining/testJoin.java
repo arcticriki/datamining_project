@@ -86,16 +86,10 @@ public class testJoin {
                                         columnContent
                                 );
 
-                                //Insert here PropertyFilters.binningColumns(prop) method
-                                prop = PropertyFilters.binningProperties(prop);
-
-                                // Excluding useless items and verifying that they are unique
-                                if (!PropertyFilters.rejectUselessAndFrequent(prop) && !transaction.contains(prop)) {
-                                    transaction.add(prop);
-                                }
+                                transaction.add(prop);
                             }
 
-                            return transaction;
+                            return PropertyFilters.itemsetFilter(transaction);
                         }
                 );
 

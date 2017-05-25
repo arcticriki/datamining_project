@@ -68,29 +68,24 @@ public class testAlternateConviction {
         JavaRDD<List<Property>> transactions = sc.textFile(filename)
                 .sample(false, sampleProbability)
                 .map(line -> {
-                        List<Property> transaction = new ArrayList<>();
-                        String[] fields = line.split(",");
+                    List<Property> transaction = new ArrayList<>();
+                    String[] fields = line.split(",");
 
-                        for (int i = 0; i < fields.length; i++) {
+                    for (int i = 0; i < fields.length; i++) {
 
-                            String columnContent = fields[i];
-                            Property prop = new Property(
-                                    fd.value().decodeColumn(i),
-                                    fd.value().decodeValue(i,columnContent),
-                                    columnContent
-                            );
+                        String columnContent = fields[i];
+                        Property prop = new Property(
+                                fd.value().decodeColumn(i),
+                                fd.value().decodeValue(i,columnContent),
+                                columnContent
+                        );
 
-                            //Insert here PropertyFilters.binningColumns(prop) method
-                            prop = PropertyFilters.binningProperties(prop);
+                        transaction.add(prop);
+                    }
 
-                            // Excluding useless items and verifying that they are unique
-                            if (!PropertyFilters.rejectUselessAndFrequent(prop) && !transaction.contains(prop)) {
-                                transaction.add(prop);
-                            }
-                        }
+                    return PropertyFilters.itemsetFilter(transaction);
 
-                        return transaction;
-                    });
+                });
 
         long transactionsCount = transactions.count();
         //transactions.map(t ->  t.stream().filter(p -> !p.getValue().equals("0")).collect(Collectors.toList()));

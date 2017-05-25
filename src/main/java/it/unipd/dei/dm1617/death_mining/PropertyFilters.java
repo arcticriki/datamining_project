@@ -121,7 +121,7 @@ public class PropertyFilters {
 
             if (currentUselessColumn.equals(column)) {
                 for (String currentUselessValue : currentUselessValues) {
-                    if (currentUselessValue.equals(value)) return true;
+                    if (currentUselessValue.equals(value) || value==null) return true;
                 }
                 break;
             }
@@ -270,7 +270,7 @@ public class PropertyFilters {
     //Auxiliar method used for the binning. The information along some categories can be grouped into some
     //binned categories, for a better understanding of the results. In particular, the CauseRecoded39 has been
     //reduced to 20 possible death categories
-     public static Property binningProperties(Property prop)
+     public static Property binningProperties(Property prop, String eduFlag)
     {
 
         String colName = prop.getColName();
@@ -292,12 +292,12 @@ public class PropertyFilters {
             newCol = "Death Category";
             newVal = CAUSE_MAP.floorEntry(code).getValue();
         }
-        else if (colName.equals(binningColumns[2])) {
+        else if (colName.equals(binningColumns[2]) && eduFlag.equals("1989 revision of education item on certificate")) {
             int code = Integer.parseInt(valIndex);
             newCol = "Education";                           //How to call it? Should it be exactly: "Education2003Revision"?
             newVal = EDUREV_MAP.floorEntry(code).getValue();
         }
-        else if (colName.equals(binningColumns[3])) {
+        else if (colName.equals(binningColumns[3]) && eduFlag.equals("2003 revision of education item on certificate")) {
             newCol = "Education";
             newVal = className;
         }
@@ -309,5 +309,28 @@ public class PropertyFilters {
         return new Property(newCol, newVal);
     }
 
+
+    public static List<Property> itemsetFilter(List<Property> itemset0) {
+
+        String eduFlag = null;
+        for (Property item : itemset0) {;
+            if(item.getColName().equals("EducationReportingFlag")) {
+                eduFlag = item.getClassName();
+            }
+        }
+
+        List<Property> itemset1 = new ArrayList<>();
+        for (Property item : itemset0) {
+            //Insert here PropertyFilters.binningColumns(prop) method
+            Property prop = PropertyFilters.binningProperties(item, eduFlag);
+
+            if (!PropertyFilters.rejectUseless(prop) && !itemset1.contains(prop)) {
+                itemset1.add(prop);
+            }
+        }
+
+        return itemset1;
+
+    }
 
 }

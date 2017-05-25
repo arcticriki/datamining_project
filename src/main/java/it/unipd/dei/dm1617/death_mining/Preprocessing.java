@@ -39,16 +39,11 @@ public class Preprocessing {
                             columnContent
                         );
 
-                        //Insert here PropertyFilters.binningColumns(prop) method
-                        prop = PropertyFilters.binningProperties(prop);
+                        transaction.add(prop);
 
-                        // Excluding useless items and verifying that they are unique
-                        if (!PropertyFilters.rejectUseless(prop) && !transaction.contains(prop)) {
-                            transaction.add(prop);
-                        }
                     }
 
-                    return transaction;
+                    return PropertyFilters.itemsetFilter(transaction);
                 }
             );
 
