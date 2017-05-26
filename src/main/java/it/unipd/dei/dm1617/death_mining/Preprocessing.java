@@ -46,7 +46,6 @@ public class Preprocessing {
                     return PropertyFilters.itemsetFilter(transaction);
                 }
             );
-
     }
 
 

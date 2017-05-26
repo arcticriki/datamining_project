@@ -59,5 +59,4 @@ public class L02_WordCount {
       System.out.println(word + " :: " + count);
     });
   }
-
 }
