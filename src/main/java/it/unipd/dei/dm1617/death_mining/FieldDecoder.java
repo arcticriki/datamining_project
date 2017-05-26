@@ -57,6 +57,7 @@ public class FieldDecoder implements Serializable {
                 colMap.put(i, map);
             }
             catch (IOException e) {
+                System.err.println(e);
                 //e.printStackTrace();
             }
         }

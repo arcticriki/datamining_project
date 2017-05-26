@@ -18,7 +18,7 @@ import java.util.List;
 import java.util.Random;
 
 /**
- * Created by Marco on 14/05/2017.
+ * Created by Gianluca on 22/05/2017.
  *
  */
 public class testAlternateConviction {
@@ -32,7 +32,7 @@ public class testAlternateConviction {
         String filename = "data/DeathRecords.csv";
         Broadcast<FieldDecoder> fd = sc.broadcast(new FieldDecoder());
         double sampleProbability = 0.3;
-        double minSup = 0.05;
+        double minSup = 0.1;
 
         //Randomly select interesting columns from file columns.csv
         List<String> interestingColumns = new ArrayList<>();
@@ -50,18 +50,6 @@ public class testAlternateConviction {
         catch (IOException e){
             e.printStackTrace();
         }
-
-        /*
-        Save selected interesting columns in a txt file. Just for testing ;)
-
-        Path columnsFile = Paths.get("results/random_interestingColumns.txt");
-        try {
-            Files.write(columnsFile, interestingColumns, Charset.forName("UTF-8"));
-        }
-        catch (IOException e) {
-            e.printStackTrace();
-        }
-        */
 
         System.out.println("Sampling with probability " + sampleProbability + " and importing data");
 
@@ -113,27 +101,23 @@ public class testAlternateConviction {
 
         // compute association rules
         JavaRDD<AssociationRules.Rule<Property>> rules = model.generateAssociationRules(0).toJavaRDD();
+        System.out.println("Number of mined rules: " + rules.count());
 
-        // map association rules in a RDD of key-value pairs, where the key is the consequent of the rule and the value is the rule itself
-        // the aim is to combine this RDD with the one previously computed to extract the support of the consequent itemset
-        JavaPairRDD<List<Property>, AssociationRules.Rule<Property>> rddConsequents = rules.mapToPair(r -> new Tuple2<>(r.javaConsequent(), r));
-
-        // create PairRDD consisting of Rule and its Lift
-        JavaPairRDD<AssociationRules.Rule<Property>, Double> rddRuleConviction = rddConsequents
+        JavaRDD<ExtendedRule> rddResult = rules
+                .mapToPair(r -> new Tuple2<>(r.javaConsequent(), r))
                 .join(rddFreqItemAndSupport)
-                .mapToPair(item ->{
-                    // the result of the join in a PairRDD with key=consequent and value = <rule, Ysupport>
-                    AssociationRules.Rule<Property> rule = item._2._1;
-                    Double YSupport = item._2._2;
-                    Double conviction = (1 - YSupport) / (1 - rule.confidence());
-                    return new Tuple2<>(conviction, rule);
-                })
-                .sortByKey(false, 1)
-                .mapToPair(i -> i.swap());
+                .mapToPair(i -> new Tuple2<>(i._2._1, i._2._2)) // <Rule, YSupport>
+                .map(i -> {
+                    AssociationRules.Rule<Property> rule = i._1;
+                    Double suppY = i._2;
+                    Double conviction = (1 - suppY) / (1 - rule.confidence());
+                    Double lift = rule.confidence()/suppY;
+                    return new ExtendedRule(rule, lift, conviction);
+                });
 
-        int K = 20;
-        rddRuleConviction
-                .take(K)
-                .forEach(i -> System.out.println(i._1 + ", Conviction: " + i._2));
+        rddResult.sortBy(i -> i.getConfidence(), false, 1)
+                .take(40)
+                .forEach(i -> System.out.println(i));
+
     }
 }
