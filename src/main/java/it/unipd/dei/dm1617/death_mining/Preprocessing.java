@@ -48,6 +48,18 @@ public class Preprocessing {
             );
     }
 
+    public JavaRDD<List<Property>> filterPredictable(JavaRDD<List<Property>> transactions){
+        return transactions.map(itemset -> {
+            List<Property> newSet = new ArrayList<>();
+            for(Property item : itemset) {
+                if (!PropertyFilters.rejectUselessAndFrequent(item)) {
+                    newSet.add(item);
+                }
+            }
+            return newSet;
+        });
+    }
+
 
     public static void main(String[] args) {
 

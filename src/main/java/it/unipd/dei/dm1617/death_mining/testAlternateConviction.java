@@ -33,56 +33,14 @@ public class testAlternateConviction {
 
         String filename = "data/DeathRecords.csv";
 
+        // import data
         System.out.println("[read dataset] Sampling with probability " + sampleProbability + " and importing data");
         JavaRDD<List<Property>> transactions = Preprocessing.dataImport(sc, filename, sampleProbability);
 
-        long transactionsCount = transactions.count();
-
-        System.out.println("[read dataset] Number of transactions after sampling: " + transactionsCount);
-        long timeImport = System.currentTimeMillis();
-
-        System.out.println("[read dataset] Elapsed time: "+ ((timeImport-start)/1000.0) + " s" );
-
-
-        // extract frequent itemsets with FP-Growth algorithm
-        System.out.println("[freq itemsets] Started mining with minimum support = " + minSup);
-        FPGrowth fpg = new FPGrowth()
-                .setMinSupport(minSup)
-                .setNumPartitions(sc.defaultParallelism());
-        FPGrowthModel<Property> model = fpg.run(transactions);
-        JavaRDD<FPGrowth.FreqItemset<Property>> rddfreqItem = model.freqItemsets().toJavaRDD();
-
-        long timeItemsetMining = System.currentTimeMillis();
-        System.out.println("[freq itemsets] Number of frequent itemsets: " + rddfreqItem.count() );
-        System.out.println("[freq itemsets] Elapsed time: " + ((timeItemsetMining-timeImport)/1000.0));
-
-
-        // generate association rules from frequent itemsets
-        System.out.println("[association rules] Started mining");
-
-        // collect frequent itemsets and their support in a RDD of KeyValue pair, where the key is the itemset
-        JavaPairRDD<List<Property>, Double> rddFreqItemAndSupport = rddfreqItem.mapToPair(item ->
-                new Tuple2<>(item.javaItems(), item.freq()*1.0/transactionsCount));
-
-       // compute association rules with minConf = 0: filtering is done at a later stage
-        JavaRDD<AssociationRules.Rule<Property>> rules = model.generateAssociationRules(0).toJavaRDD();
-
-        // compute extra metrics
-        JavaRDD<ExtendedRule> rddResult = rules
-                .mapToPair(r -> new Tuple2<>(r.javaConsequent(), r))
-                .join(rddFreqItemAndSupport)
-                .mapToPair(i -> new Tuple2<>(i._2._1, i._2._2)) // <Rule, YSupport>
-                .map(i -> {
-                    AssociationRules.Rule<Property> rule = i._1;
-                    Double suppY = i._2;
-                    Double conviction = (1 - suppY) / (1 - rule.confidence());
-                    Double lift = rule.confidence()/suppY;
-                    return new ExtendedRule(rule, lift, conviction);
-                });
-
-        long timeRuleMining = System.currentTimeMillis();
-        System.out.println("[association rules] Number of mined rules: " + rules.count());
-        System.out.println("[association rules] Elapsed time: " + ((timeRuleMining-timeItemsetMining)/1000.0));
+        // mine frequent itemsets and association rules
+        DeathMiner dm = new DeathMiner(sc, transactions);
+        JavaPairRDD<List<Property>, Double> rddFreqItemAndSupport = dm.mineFrequentItemsets(minSup);
+        JavaRDD<ExtendedRule> rddResult = dm.mineAssociationRules();
 
         // save results in dedicated folder structure
         String outputdir = new SimpleDateFormat("'results/'yyyyMMdd-HHmmss").format(new Date());
