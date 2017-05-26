@@ -11,98 +11,63 @@ import org.apache.spark.mllib.fpm.FPGrowth;
 import org.apache.spark.mllib.fpm.FPGrowthModel;
 import scala.Tuple2;
 
-import java.io.FileReader;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
+import java.util.Date;
+import java.text.SimpleDateFormat;
 
 /**
- * Created by Gianluca on 22/05/2017.
+ * Created by gianluca on 22/05/2017.
  *
  */
 public class testAlternateConviction {
     public static void main(String[] args) {
 
-        long start = System.currentTimeMillis();
-
-        SparkConf sparkConf = new SparkConf(true).setAppName("Frequent itemsets mining");
-        JavaSparkContext sc = new JavaSparkContext(sparkConf);
-
-        String filename = "data/DeathRecords.csv";
-        Broadcast<FieldDecoder> fd = sc.broadcast(new FieldDecoder());
         double sampleProbability = 0.3;
         double minSup = 0.1;
 
-        //Randomly select interesting columns from file columns.csv
-        List<String> interestingColumns = new ArrayList<>();
-        Random rand = new Random();
+        long start = System.currentTimeMillis();
 
-        try {
-            CSVReader reader = new CSVReader(new FileReader("data/columns.csv"));
-            String[] columns = reader.readNext();
+        SparkConf sparkConf = new SparkConf(true).setAppName("Death Mining");
+        JavaSparkContext sc = new JavaSparkContext(sparkConf);
 
-            for (String c: columns) {
-                int temp = rand.nextInt(2);
-                if (temp == 1) interestingColumns.add(c);
-            }
-        }
-        catch (IOException e){
-            e.printStackTrace();
-        }
+        String filename = "data/DeathRecords.csv";
 
-        System.out.println("Sampling with probability " + sampleProbability + " and importing data");
-
-        JavaRDD<List<Property>> transactions = sc.textFile(filename)
-                .sample(false, sampleProbability)
-                .map(line -> {
-                    List<Property> transaction = new ArrayList<>();
-                    String[] fields = line.split(",");
-
-                    for (int i = 0; i < fields.length; i++) {
-
-                        String columnContent = fields[i];
-                        Property prop = new Property(
-                                fd.value().decodeColumn(i),
-                                fd.value().decodeValue(i,columnContent),
-                                columnContent
-                        );
-
-                        transaction.add(prop);
-                    }
-
-                    return PropertyFilters.itemsetFilter(transaction);
-
-                });
+        System.out.println("[read dataset] Sampling with probability " + sampleProbability + " and importing data");
+        JavaRDD<List<Property>> transactions = Preprocessing.dataImport(sc, filename, sampleProbability);
 
         long transactionsCount = transactions.count();
-        //transactions.map(t ->  t.stream().filter(p -> !p.getValue().equals("0")).collect(Collectors.toList()));
 
-        System.out.println("Number of transactions after sampling: " + transactionsCount);
+        System.out.println("[read dataset] Number of transactions after sampling: " + transactionsCount);
+        long timeImport = System.currentTimeMillis();
 
-        long import_data = System.currentTimeMillis();
+        System.out.println("[read dataset] Elapsed time: "+ ((timeImport-start)/1000.0) + " s" );
 
-        System.out.println("[read dataset] Elapsed time: "+ ((import_data-start)/1000.0) + " s" );
 
+        // extract frequent itemsets with FP-Growth algorithm
+        System.out.println("[freq itemsets] Started mining with minimum support = " + minSup);
         FPGrowth fpg = new FPGrowth()
                 .setMinSupport(minSup)
-                .setNumPartitions(10);
+                .setNumPartitions(sc.defaultParallelism());
         FPGrowthModel<Property> model = fpg.run(transactions);
-
-
         JavaRDD<FPGrowth.FreqItemset<Property>> rddfreqItem = model.freqItemsets().toJavaRDD();
+
+        long timeItemsetMining = System.currentTimeMillis();
+        System.out.println("[freq itemsets] Number of frequent itemsets: " + rddfreqItem.count() );
+        System.out.println("[freq itemsets] Elapsed time: " + ((timeItemsetMining-timeImport)/1000.0));
+
+
+        // generate association rules from frequent itemsets
+        System.out.println("[association rules] Started mining");
 
         // collect frequent itemsets and their support in a RDD of KeyValue pair, where the key is the itemset
         JavaPairRDD<List<Property>, Double> rddFreqItemAndSupport = rddfreqItem.mapToPair(item ->
                 new Tuple2<>(item.javaItems(), item.freq()*1.0/transactionsCount));
 
-        // save a local copy of frequent itemsets
-        List<FPGrowth.FreqItemset<Property>> localFreqItemset = rddfreqItem.collect();
-
-        // compute association rules
+       // compute association rules with minConf = 0: filtering is done at a later stage
         JavaRDD<AssociationRules.Rule<Property>> rules = model.generateAssociationRules(0).toJavaRDD();
-        System.out.println("Number of mined rules: " + rules.count());
 
+        // compute extra metrics
         JavaRDD<ExtendedRule> rddResult = rules
                 .mapToPair(r -> new Tuple2<>(r.javaConsequent(), r))
                 .join(rddFreqItemAndSupport)
@@ -115,9 +80,23 @@ public class testAlternateConviction {
                     return new ExtendedRule(rule, lift, conviction);
                 });
 
-        rddResult.sortBy(i -> i.getConfidence(), false, 1)
-                .take(40)
-                .forEach(i -> System.out.println(i));
+        long timeRuleMining = System.currentTimeMillis();
+        System.out.println("[association rules] Number of mined rules: " + rules.count());
+        System.out.println("[association rules] Elapsed time: " + ((timeRuleMining-timeItemsetMining)/1000.0));
+
+        // save results in dedicated folder structure
+        String outputdir = new SimpleDateFormat("'results/'yyyyMMdd-HHmmss").format(new Date());
+        System.out.println("[saving results] Ouput path: " + outputdir);
+
+        rddResult.sortBy(ExtendedRule::getConfidence, false, 1)
+                .map(ExtendedRule::CSVformat)
+                .saveAsTextFile(outputdir + "/rules");
+
+        rddFreqItemAndSupport
+                .mapToPair(Tuple2::swap)
+                .sortByKey(false, 1)
+                .map(i -> i._2.toString() + ";" + i._1)
+                .saveAsTextFile(outputdir + "/freq-itemsets");
 
     }
 }

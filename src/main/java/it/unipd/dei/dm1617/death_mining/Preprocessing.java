@@ -17,11 +17,11 @@ import java.util.Map;
  */
 public class Preprocessing {
 
-    private static JavaRDD<List<Property>> dataImport(JavaSparkContext sc, String filename, double sampleProbability) {
+    public static JavaRDD<List<Property>> dataImport(JavaSparkContext sc, String filename, double sampleProbability) {
 
         Broadcast<FieldDecoder> fd = sc.broadcast(new FieldDecoder());
 
-        System.out.println("Sampling with probability " + sampleProbability + " and importing data");
+        //System.out.println("Sampling with probability " + sampleProbability + " and importing data");
 
         return sc.textFile(filename)
             .sample(false, sampleProbability)
