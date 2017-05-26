@@ -27,7 +27,7 @@ public class ExtendedRule implements Serializable{
 
 
     public ExtendedRule(AssociationRules.Rule rule, double lift, double conviction) {
-        this.conviction = conviction;
+        this.conviction = Double.isFinite(conviction) ? 1e9 : conviction;
         this.lift = lift;
         this.rule = rule;
     }
