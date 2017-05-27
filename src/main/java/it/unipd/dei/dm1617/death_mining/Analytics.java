@@ -27,13 +27,57 @@ import java.util.*;
 
 public class Analytics {
 
+    public static JavaRDD<List<Property>> dataImport(JavaSparkContext sc, String filename, double sampleProbability) {
+
+        Broadcast<FieldDecoder> fd = sc.broadcast(new FieldDecoder());
+
+        return sc.textFile(filename)
+                .sample(false, sampleProbability)
+                .map(
+                        line -> {
+                            List<Property> transaction = new ArrayList<>();
+                            String[] fields = line.split(",");
+
+                            for (int i = 1; i < fields.length; i++) {
+
+                                String columnContent = fields[i];
+                                Property prop = new Property(
+                                        fd.value().decodeColumn(i),
+                                        fd.value().decodeValue(i,columnContent),
+                                        columnContent
+                                );
+
+                                transaction.add(prop);
+
+                            }
+
+                            return transaction;
+                        }
+                );
+    }
+
     public static void main(String[] args) {
 
         SparkConf sparkConf = new SparkConf(true).setAppName("Frequent itemsets mining");
         JavaSparkContext sc = new JavaSparkContext(sparkConf);
 
-        JavaRDD<List<Property>> transactions = sc.objectFile("results/preprocessed");
+        String filename = "data/DeathRecords.csv";
+        double sampleProbability = 1;
 
+        // Managing input args
+        JavaRDD<List<Property>> transactions = null;
+        String option;
+        if(args.length>0)
+            option = args[0];
+        else
+            option = "";
+
+        if(option == "original")
+                transactions = dataImport(sc, filename, sampleProbability);
+        else {
+            transactions = Preprocessing.dataImport(sc, filename, sampleProbability);
+            option = "";
+        }
         long transactionsCount = transactions.count();
         Broadcast<Long> bCount = sc.broadcast(transactionsCount);
 
@@ -52,7 +96,7 @@ public class Analytics {
                 })
                 .collect();
 
-        String dirName = "results/stats/";
+        String dirName = "results/stats_"+option+"/";
         File directory = new File(dirName);
 
         if (! directory.exists()){
