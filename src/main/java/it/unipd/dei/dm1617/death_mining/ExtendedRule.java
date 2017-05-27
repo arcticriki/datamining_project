@@ -21,25 +21,31 @@ public class ExtendedRule implements Serializable{
         return rule.confidence();
     }
 
+    public double getSupport() {
+        return support;
+    }
+
     private double lift;
     private double conviction;
+    private double support;
     private AssociationRules.Rule rule;
 
 
-    public ExtendedRule(AssociationRules.Rule rule, double lift, double conviction) {
+    public ExtendedRule(AssociationRules.Rule rule, double support, double lift, double conviction) {
         this.conviction = Double.isFinite(conviction) ? 1e9 : conviction;
         this.lift = lift;
         this.rule = rule;
+        this.support = support;
     }
 
     public String CSVformat(){
         return this.rule.javaAntecedent().toString() + " => " + this.rule.javaConsequent().toString() +
-                ";" + this.getConfidence() + ";" + this.getLift() + ";" + this.getConviction();
+                ";" + this.getSupport() + ";" + this.getConfidence() + ";" + this.getLift() + ";" + this.getConviction();
     }
 
     public String toString(){
         return this.rule.javaAntecedent().toString() + " => " + this.rule.javaConsequent().toString() +
-                " - Confidence: " + this.getConfidence() + " Lift: " + this.getLift() + " Conviction: "
-                + this.getConviction();
+                " - Support: " + this.getSupport() + " Confidence: " + this.getConfidence() + " Lift: "
+                + this.getLift() + " Conviction: " + this.getConviction();
     }
 }

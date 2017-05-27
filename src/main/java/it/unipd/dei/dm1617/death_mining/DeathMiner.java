@@ -69,12 +69,20 @@ public class DeathMiner {
                 .mapToPair(r -> new Tuple2<>(r.javaConsequent(), r))
                 .join(rddFreqItemAndSupport)
                 .mapToPair(i -> new Tuple2<>(i._2._1, i._2._2)) // <Rule, YSupport>
-                .map(i -> {
+                .mapToPair(i -> {
                     AssociationRules.Rule<Property> rule = i._1;
                     Double suppY = i._2;
+                    return new Tuple2<>(rule.javaAntecedent(), new Tuple2<>(rule, suppY));
+                })
+                .join(rddFreqItemAndSupport)
+                .map(i -> {
+                    AssociationRules.Rule<Property> rule = i._2._1._1;
+                    Double suppX = i._2._2;
+                    Double suppY = i._2._1._2;
+                    Double suppXUY = rule.confidence()*suppX;
                     Double conviction = (1 - suppY) / (1 - rule.confidence());
                     Double lift = rule.confidence()/suppY;
-                    return new ExtendedRule(rule, lift, conviction);
+                    return new ExtendedRule(rule, suppXUY, lift, conviction);
                 });
 
         long timeRuleMining = System.currentTimeMillis();
