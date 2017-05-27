@@ -1,20 +1,13 @@
 package it.unipd.dei.dm1617.death_mining;
 
 import org.apache.spark.SparkConf;
+import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
-import org.apache.spark.mllib.fpm.AssociationRules;
-import org.apache.spark.mllib.fpm.FPGrowth;
-import org.apache.spark.mllib.fpm.FPGrowthModel;
+import scala.Tuple2;
 
-import java.io.File;
-import java.io.IOException;
-import java.nio.charset.Charset;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.List;
+import java.text.SimpleDateFormat;
+import java.util.*;
 
 /**
  * Created by tonca on 26/05/17.
@@ -28,100 +21,82 @@ import java.util.List;
  */
 public class SubgroupMining {
 
-    public static void main(String[] args) {
+    public static void singleGroupMining(JavaSparkContext sc,
+                                         JavaRDD<List<Property>> transactions,
+                                         String colSelection,
+                                         String valSelection,
+                                         double minSup
+    ) {
 
-        SparkConf sparkConf = new SparkConf(true).setAppName("Frequent itemsets mining");
-        JavaSparkContext sc = new JavaSparkContext(sparkConf);
-
-        // Import preprocessed data
-        JavaRDD<List<Property>> transactions = sc.objectFile("results/preprocessed");
-
-        // Removing too frequent items
-        transactions = transactions.map(
-            itemset -> {
-                List<Property> newSet = new ArrayList<>();
-                for(Property item : itemset) {
-                    if (!PropertyFilters.rejectUselessAndFrequent(item)) {
-                        newSet.add(item);
-                    }
-                }
-                return newSet;
-            }
-        ).filter( itemset -> {
+        // Removing too frequent items and selecting subgroup
+        transactions = transactions.filter( itemset -> {
             boolean contains = false;
             for (Property item : itemset) {
-                if (item._1().equals(args[0]) && item._2().equals(args[1]))
+                if (item._1().equals(colSelection) && item._2().equals(valSelection))
                     contains = true;
             }
             return Boolean.valueOf(contains);
         })
-        .map(transaction -> {
-            Property reject = null;
-            for (Property item : transaction) {
-                if (item._1().equals(args[0]))
-                    reject = item;
-            }
-            transaction.remove(reject);
-            return transaction;
-        });
+                .map(transaction -> {
+                    Property reject = null;
+                    for (Property item : transaction) {
+                        if (item._1().equals(colSelection))
+                            reject = item;
+                    }
+                    transaction.remove(reject);
+                    return transaction;
+                });
 
-        long transactionsCount = transactions.count();
+        // mine frequent itemsets and association rules
+        DeathMiner dm = new DeathMiner(sc, transactions);
+        JavaPairRDD<List<Property>, Double> rddFreqItemAndSupport = dm.mineFrequentItemsets(minSup);
+        JavaRDD<ExtendedRule> rddResult = dm.mineAssociationRules();
 
+        // save results in dedicated folder structure
+        String subgroupdir = "results/"+colSelection+":"+valSelection+"/";
+        String outputdir = new SimpleDateFormat("yyyyMMdd-HHmmss").format(new Date());
+        System.out.println("[saving results] Ouput path: " + outputdir);
+
+        rddResult.sortBy(ExtendedRule::getConfidence, false, 1)
+                .map(ExtendedRule::CSVformat)
+                .saveAsTextFile(subgroupdir+outputdir + "/rules");
+
+        rddFreqItemAndSupport
+                .mapToPair(Tuple2::swap)
+                .sortByKey(false, 1)
+                .map(i -> i._2.toString() + ";" + i._1)
+                .saveAsTextFile(subgroupdir+outputdir + "/freq-itemsets");
+
+    }
+
+    public static void main(String[] args) {
+
+        double sampleProbability = 1;
         double minSup = 0.1;
 
-        // FREQUENT ITEMSETS MINING
-        FPGrowth fpg = new FPGrowth()
-                .setMinSupport(minSup)
-                .setNumPartitions(10);
-        FPGrowthModel<Property> model = fpg.run(transactions);
+        SparkConf sparkConf = new SparkConf(true).setAppName("Death Mining");
+        JavaSparkContext sc = new JavaSparkContext(sparkConf);
 
-        // OUTPUT FREQUENT ITEMSETS
-        ArrayList<String> outputLines = new ArrayList<>();
-        outputLines.add("Item,Support");
-        for (FPGrowth.FreqItemset<Property> itemset: model.freqItemsets().toJavaRDD().collect()) {
-            String line = itemset.javaItems().toString().replace(",", "")
-                    +"," + ((float) itemset.freq() / (float) transactionsCount);
-            System.out.println(line);
-            outputLines.add(line);
-        }
-        File directory = new File("results/");
-        if (! directory.exists()){
-            directory.mkdir();
-        }
-        // Writing output to a file
-        Path file = Paths.get("results/frequent-itemsets-"+args[0]+":"+args[1]+".csv");
-        try {
-            Files.write(file, outputLines, Charset.forName("UTF-8"));
-        }
-        catch (IOException e) {
-            e.printStackTrace();
-        }
+        String filename = "data/DeathRecords.csv";
 
+        // import data
+        System.out.println("[read dataset] Sampling with probability " + sampleProbability + " and importing data");
+        JavaRDD<List<Property>> transactions = Preprocessing.dataImport(sc, filename, sampleProbability);
 
-        // ASSOCIATION RULES MINING (all metrics)
-        double minConfidence = 0.5;
-        outputLines.clear();
-        outputLines.add("Antecedent,Consequent,Confidence");
-        for (AssociationRules.Rule<Property> rule
-                : model.generateAssociationRules(minConfidence)
-                .toJavaRDD()
-                .sortBy((rule) -> rule.confidence(), false, 1)
-                .collect())
+        
+        Map<String, List<String>> subgroups = new HashMap<>();
+        // It can take some time to compute a lot of subgroups together,
+        // Comment some of the lines below for a shorter analysis
+        subgroups.put("Sex", Arrays.asList("M", "F"));
+        subgroups.put("Binned Age", Arrays.asList("Baby", "Child", "Teenager", "Adult", "Old"));
+        subgroups.put("RaceRecode3", Arrays.asList("White", "Black", "Races other than White or Black"));
+
+        for(Map.Entry<String, List<String>> entry : subgroups.entrySet())
         {
-            String line = rule.javaAntecedent().toString().replace(",","")
-                    + "," + rule.javaConsequent().toString().replace(",","")
-                    + "," + rule.confidence();
-            System.out.println(line);
-            outputLines.add(line);
-        }
-
-        // OUTPUT ASSOCIATION RULES
-        file = Paths.get("results/association-rules-"+args[0]+":"+args[1]+".csv");
-        try {
-            Files.write(file, outputLines, Charset.forName("UTF-8"));
-        }
-        catch (IOException e) {
-            e.printStackTrace();
+            for(String val : entry.getValue()) {
+                singleGroupMining(sc, transactions, entry.getKey(), val, minSup);
+            }
         }
     }
 }
+
