@@ -43,7 +43,7 @@ public class L01_FunctionArguments {
   // a PersonFormatter interface with a single method `format` that
   // takes a single parameter of type Person and returns a string.
   interface PersonFormatter {
-    public String format(Person p);
+    String format(Person p);
   }
 
   // Using the interface define above, we can write the following

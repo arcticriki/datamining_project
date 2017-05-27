@@ -313,7 +313,7 @@ public class PropertyFilters {
     public static List<Property> itemsetFilter(List<Property> itemset0) {
 
         String eduFlag = null;
-        for (Property item : itemset0) {;
+        for (Property item : itemset0) {
             if(item.getColName().equals("EducationReportingFlag")) {
                 eduFlag = item.getClassName();
             }

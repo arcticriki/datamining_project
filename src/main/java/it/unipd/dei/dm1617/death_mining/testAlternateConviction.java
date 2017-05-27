@@ -1,20 +1,14 @@
 package it.unipd.dei.dm1617.death_mining;
 
-import au.com.bytecode.opencsv.CSVReader;
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
-import org.apache.spark.broadcast.Broadcast;
-import org.apache.spark.mllib.fpm.AssociationRules;
-import org.apache.spark.mllib.fpm.FPGrowth;
-import org.apache.spark.mllib.fpm.FPGrowthModel;
 import scala.Tuple2;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Date;
 import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.List;
 
 /**
  * Created by gianluca on 22/05/2017.
@@ -23,10 +17,8 @@ import java.text.SimpleDateFormat;
 public class testAlternateConviction {
     public static void main(String[] args) {
 
-        double sampleProbability = 0.3;
-        double minSup = 0.1;
-
-        long start = System.currentTimeMillis();
+        double sampleProbability = 0.1;
+        double minSup = 0.2;
 
         SparkConf sparkConf = new SparkConf(true).setAppName("Death Mining");
         JavaSparkContext sc = new JavaSparkContext(sparkConf);
@@ -46,15 +38,7 @@ public class testAlternateConviction {
         String outputdir = new SimpleDateFormat("'results/'yyyyMMdd-HHmmss").format(new Date());
         System.out.println("[saving results] Ouput path: " + outputdir);
 
-        rddResult.sortBy(ExtendedRule::getConfidence, false, 1)
-                .map(ExtendedRule::CSVformat)
-                .saveAsTextFile(outputdir + "/rules");
-
-        rddFreqItemAndSupport
-                .mapToPair(Tuple2::swap)
-                .sortByKey(false, 1)
-                .map(i -> i._2.toString() + ";" + i._1)
-                .saveAsTextFile(outputdir + "/freq-itemsets");
-
+        DeathSaver.saveItemsets(outputdir+"/freq-itemsets", rddFreqItemAndSupport);
+        DeathSaver.saveRules(outputdir+"/rules", rddResult);
     }
 }

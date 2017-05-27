@@ -21,8 +21,6 @@ public class Preprocessing {
 
         Broadcast<FieldDecoder> fd = sc.broadcast(new FieldDecoder());
 
-        //System.out.println("Sampling with probability " + sampleProbability + " and importing data");
-
         return sc.textFile(filename)
             .sample(false, sampleProbability)
             .map(
