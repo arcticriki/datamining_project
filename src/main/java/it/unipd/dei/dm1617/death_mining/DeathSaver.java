@@ -18,7 +18,7 @@ import java.util.List;
  * Created by gianluca on 27/05/17.
  */
 public class DeathSaver {
-    public static void saveItemsets(String path, JavaPairRDD<List<Property>, Double> freqItemsets){
+    public static void saveItemsets(String path, JavaPairRDD<List<Property>, Double> freqItemsetsSupport){
 
 
         try {
@@ -29,10 +29,8 @@ public class DeathSaver {
             List<String> lines = new ArrayList<>();
             lines.add("itemset;support");
             lines.addAll(
-                freqItemsets
-                    .mapToPair(Tuple2::swap)
-                    .sortByKey(false)
-                    .map(i -> i._2.toString() + ";" + i._1.toString())
+                    freqItemsetsSupport
+                    .map(i -> i._1.toString() + ";" + i._2.toString())
                     .collect()
             );
 
@@ -51,11 +49,7 @@ public class DeathSaver {
 
             List<String> lines = new ArrayList<>();
             lines.add("rule;support;confidence;lift;conviction");
-            lines.addAll(
-                    rules.sortBy(ExtendedRule::getConfidence, false, 1)
-                            .map(ExtendedRule::CSVformat)
-                            .collect()
-            );
+            lines.addAll(rules.map(ExtendedRule::CSVformat).collect());
 
             Files.write(outputFile, lines, Charset.forName("UTF-8"));
         }catch (Exception e){
