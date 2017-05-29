@@ -85,7 +85,7 @@ public class PropertyFilters {
             new Couple("MaritalStatus", new String[] {"Marital Status unknown"}),
             new Couple("MethodOfDisposition", new String[] {"Other", "null", "Unknown"}),
             new Couple("PlaceOfDeathAndDecedentsStatus", new String[] {"Place of death unknown"}),
-            new Couple("PlaceOfInjury", new String[] {"Unspecified place", "Other Specifided Places"})
+            new Couple("PlaceOfInjury", new String[] {"Causes other than W00-Y34", "Unspecified place", "Other Specifided Places"})
     };
 
 
@@ -96,7 +96,6 @@ public class PropertyFilters {
             new Couple("Autopsy", new String[] {"N"}),
             new Couple("Education1989Revision", new String[] {"No formal education"}),
             new Couple("MannerOfDeath", new String[] {"Natural"}),
-            new Couple("PlaceOfInjury", new String[] {"Causes other than W00-Y34"}),
             //new Couple("Race", new String[] {"White"}),
             new Couple("RaceRecode3", new String[] {"White"}),
             //new Couple("InjuryAtWork", new String[] {"N"}),
