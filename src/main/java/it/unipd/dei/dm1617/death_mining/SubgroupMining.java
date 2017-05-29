@@ -25,7 +25,8 @@ public class SubgroupMining {
                                          JavaRDD<List<Property>> transactions,
                                          String colSelection,
                                          String valSelection,
-                                         double minSup
+                                         double minSup,
+                                         double maxFreq
     ) {
 
         // Removing too frequent items and selecting subgroup
@@ -55,7 +56,7 @@ public class SubgroupMining {
                 .flatMap(itemset -> itemset.iterator())
                 .mapToPair(item -> new Tuple2<>(item, 1))
                 .reduceByKey((a, b) -> a + b)
-                .filter(item -> Boolean.valueOf((1.0*item._2())/bCount.getValue()>0.6))
+                .filter(item -> Boolean.valueOf((1.0*item._2())/bCount.getValue()>maxFreq))
                 .map(item -> item._1())
                 .collect();
 
@@ -97,6 +98,7 @@ public class SubgroupMining {
 
         double sampleProbability = 1;
         double minSup = 0.1;
+        double maxFreq = 0.7;
 
         SparkConf sparkConf = new SparkConf(true).setAppName("Death Mining");
         JavaSparkContext sc = new JavaSparkContext(sparkConf);
@@ -121,7 +123,7 @@ public class SubgroupMining {
         {
             for(String val : entry.getValue()) {
                 System.out.println(String.format("[subgroup selection] %s : %s",entry.getKey(),val));
-                singleGroupMining(sc, transactions, entry.getKey(), val, minSup);
+                singleGroupMining(sc, transactions, entry.getKey(), val, minSup, maxFreq);
             }
         }
     }
