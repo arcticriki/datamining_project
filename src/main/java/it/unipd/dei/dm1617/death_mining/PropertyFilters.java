@@ -57,6 +57,7 @@ public class PropertyFilters {
             "AgeRecode12",
             "InfantAgeRecode22",
             "CurrentDataYear",
+            "MannerOfDeath",
             "Icd10Code",
             "CauseRecode358",
             "CauseRecode113",
