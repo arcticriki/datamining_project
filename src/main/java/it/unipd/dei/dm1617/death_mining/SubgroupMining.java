@@ -82,15 +82,8 @@ public class SubgroupMining {
         String outputdir = new SimpleDateFormat("yyyyMMdd-HHmmss").format(new Date());
         System.out.println("[saving results] Ouput path: " + outputdir);
 
-        rddResult.sortBy(ExtendedRule::getConfidence, false, 1)
-                .map(ExtendedRule::CSVformat)
-                .saveAsTextFile(subgroupdir+outputdir + "/rules");
-
-        rddFreqItemAndSupport
-                .mapToPair(Tuple2::swap)
-                .sortByKey(false, 1)
-                .map(i -> i._2.toString() + ";" + i._1)
-                .saveAsTextFile(subgroupdir+outputdir + "/freq-itemsets");
+        DeathSaver.saveItemsets(subgroupdir+outputdir+"/freq-itemsets", rddFreqItemAndSupport);
+        DeathSaver.saveRules(subgroupdir+outputdir+"/rules", rddResult);
 
     }
 
@@ -114,9 +107,9 @@ public class SubgroupMining {
         // It can take some time to compute a lot of subgroups together,
         // Comment some of the lines below for a shorter analysis
         subgroups.put("Sex", Arrays.asList("M", "F"));
-        subgroups.put("Binned Age", Arrays.asList("Baby", "Child", "Teenager", "Adult", "Old"));
-        subgroups.put("RaceRecode3", Arrays.asList("White", "Black", "Races other than White or Black"));
-        subgroups.put("Death Category", Arrays.asList("Homicide", "Suicide", "Accident"));
+        //subgroups.put("Binned Age", Arrays.asList("Baby", "Child", "Teenager", "Adult", "Old"));
+        //subgroups.put("RaceRecode3", Arrays.asList("White", "Black", "Races other than White or Black"));
+        //subgroups.put("Death Category", Arrays.asList("Homicide", "Suicide", "Accident"));
 
 
         for(Map.Entry<String, List<String>> entry : subgroups.entrySet())
@@ -126,6 +119,7 @@ public class SubgroupMining {
                 singleGroupMining(sc, transactions, entry.getKey(), val, minSup, maxFreq);
             }
         }
+
     }
 }
 
