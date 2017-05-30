@@ -3,11 +3,13 @@ package it.unipd.dei.dm1617.death_mining;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
+import org.apache.spark.broadcast.Broadcast;
 import org.apache.spark.mllib.fpm.AssociationRules;
 import org.apache.spark.mllib.fpm.FPGrowth;
 import org.apache.spark.mllib.fpm.FPGrowthModel;
 import scala.Tuple2;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -26,7 +28,37 @@ public class DeathMiner {
         this.transactionCount = transactions.count();
     }
 
+    public List<Property> filterFrequentItemsets(double maxFreq) {
+
+        long transactionsCount = transactions.count();
+        Broadcast<Long> bCount = sc.broadcast(transactionsCount);
+
+        // FILTERING TOO FREQUENT ITEMS
+        List<Property> outputs = transactions
+                .flatMap(itemset -> itemset.iterator())
+                .mapToPair(item -> new Tuple2<>(item, 1))
+                .reduceByKey((a, b) -> a + b)
+                .filter(item -> Boolean.valueOf((1.0*item._2())/bCount.getValue()>maxFreq))
+                .map(Tuple2::_1)
+                .collect();
+
+        System.out.println("Too frequent items: "+outputs);
+
+        transactions = transactions.map(itemset -> {
+            List<Property> tmp = new ArrayList<>();
+            for (Property item : itemset) {
+                if (!outputs.contains(item)) {
+                    tmp.add(item);
+                }
+            }
+            return tmp;
+        });
+
+        return outputs;
+    }
+
     public JavaPairRDD<List<Property>, Double> mineFrequentItemsets(double minSup){
+
         long timeStart = System.currentTimeMillis();
 
         // extract frequent itemsets with FP-Growth algorithm

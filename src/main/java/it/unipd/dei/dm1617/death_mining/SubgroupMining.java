@@ -4,8 +4,6 @@ import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
-import org.apache.spark.broadcast.Broadcast;
-import scala.Tuple2;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
@@ -50,32 +48,12 @@ public class SubgroupMining {
                 return transaction;
             });
 
-        long transactionsCount = transactions.count();
-        Broadcast<Long> bCount = sc.broadcast(transactionsCount);
 
-        // FILTERING TOO FREQUENT ITEMS
-        List<Property> outputs = transactions
-                .flatMap(itemset -> itemset.iterator())
-                .mapToPair(item -> new Tuple2<>(item, 1))
-                .reduceByKey((a, b) -> a + b)
-                .filter(item -> Boolean.valueOf((1.0*item._2())/bCount.getValue()>maxFreq))
-                .map(Tuple2::_1)
-                .collect();
-
-        System.out.println("Too frequent items: "+outputs);
-
-        transactions = transactions.map(itemset -> {
-            List<Property> tmp = new ArrayList<>();
-            for (Property item : itemset) {
-                if (!outputs.contains(item)) {
-                    tmp.add(item);
-                }
-            }
-            return tmp;
-        });
 
         // mine frequent itemsets and association rules
         DeathMiner dm = new DeathMiner(sc, transactions);
+        List<Property> topFrequent = dm.filterFrequentItemsets(maxFreq);
+
         JavaPairRDD<List<Property>, Double> rddFreqItemAndSupport = dm.mineFrequentItemsets(minSup);
         JavaRDD<ExtendedRule> rddResult = dm.mineAssociationRules();
 
@@ -84,7 +62,7 @@ public class SubgroupMining {
         String outputdir = new SimpleDateFormat("yyyyMMdd-HHmmss").format(new Date());
         System.out.println("[saving results] Ouput path: " + outputdir);
 
-        DeathSaver.saveLog(subgroupdir+outputdir+"/log", minSup, maxFreq);
+        DeathSaver.saveLog(subgroupdir+outputdir+"/log", minSup, maxFreq, topFrequent.toString());
         DeathSaver.saveItemsets(subgroupdir+outputdir+"/freq-itemsets", rddFreqItemAndSupport);
         DeathSaver.saveRules(subgroupdir+outputdir+"/rules", rddResult);
 
