@@ -56,4 +56,20 @@ public class DeathSaver {
             e.printStackTrace();
         }
     }
+
+    public static void saveLog(String path, double minSup, double maxFreq) {
+        try {
+            Path outputFile = Paths.get(path);
+            if (!Files.exists(outputFile.getParent()))
+                Files.createDirectory(outputFile.getParent());
+
+            List<String> lines = new ArrayList<>();
+            lines.add(String.format("maxFreq: %s",maxFreq));
+            lines.add(String.format("minSup: %s",minSup));
+
+            Files.write(outputFile, lines, Charset.forName("UTF-8"));
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+    }
 }

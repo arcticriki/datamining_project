@@ -29,6 +29,8 @@ public class SubgroupMining {
                                          double maxFreq
     ) {
 
+        System.out.println(String.format("[filtering frequent] %s : %s","maxFreq",maxFreq));
+
         // Removing too frequent items and selecting subgroup
         transactions = transactions.filter( itemset -> {
                 boolean contains = false;
@@ -82,6 +84,7 @@ public class SubgroupMining {
         String outputdir = new SimpleDateFormat("yyyyMMdd-HHmmss").format(new Date());
         System.out.println("[saving results] Ouput path: " + outputdir);
 
+        DeathSaver.saveLog(subgroupdir+outputdir+"/log", minSup, maxFreq);
         DeathSaver.saveItemsets(subgroupdir+outputdir+"/freq-itemsets", rddFreqItemAndSupport);
         DeathSaver.saveRules(subgroupdir+outputdir+"/rules", rddResult);
 
@@ -91,7 +94,7 @@ public class SubgroupMining {
 
         double sampleProbability = 1;
         double minSup = 0.05;
-        double maxFreq = 0.5;
+        double maxFreq = 0.7;
 
         SparkConf sparkConf = new SparkConf(true).setAppName("Death Mining");
         JavaSparkContext sc = new JavaSparkContext(sparkConf);
@@ -107,16 +110,25 @@ public class SubgroupMining {
         // It can take some time to compute a lot of subgroups together,
         // Comment some of the lines below for a shorter analysis
         subgroups.put("Sex", Arrays.asList("M", "F"));
-        //subgroups.put("Binned Age", Arrays.asList("Baby", "Child", "Teenager", "Adult", "Old"));
-        //subgroups.put("RaceRecode3", Arrays.asList("White", "Black", "Races other than White or Black"));
-        //subgroups.put("Death Category", Arrays.asList("Homicide", "Suicide", "Accident"));
+        subgroups.put("Binned Age", Arrays.asList("Baby", "Child", "Teenager", "Adult", "Old"));
+        subgroups.put("RaceRecode3", Arrays.asList("White", "Black", "Races other than White or Black"));
+        subgroups.put("Death Category", Arrays.asList("Homicide", "Suicide", "Accident"));
 
 
         for(Map.Entry<String, List<String>> entry : subgroups.entrySet())
         {
             for(String val : entry.getValue()) {
+
+                long timeStart = System.currentTimeMillis();
                 System.out.println(String.format("[subgroup selection] %s : %s",entry.getKey(),val));
+
                 singleGroupMining(sc, transactions, entry.getKey(), val, minSup, maxFreq);
+
+                long timeSubgroup = System.currentTimeMillis();
+                System.out.println(String.format("[Subgroup selection] Elapsed time for %s : %s, %s s",
+                        entry.getKey(),
+                        val,
+                        ((timeSubgroup-timeStart)/1000.0)));
             }
         }
 
