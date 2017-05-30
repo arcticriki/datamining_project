@@ -24,7 +24,7 @@ public class DeathSaver {
         try {
             Path outputFile = Paths.get(path);
             if (!Files.exists(outputFile.getParent()))
-                Files.createDirectory(outputFile.getParent());
+                Files.createDirectories(outputFile.getParent());
 
             List<String> lines = new ArrayList<>();
             lines.add("itemset;support");
@@ -45,7 +45,7 @@ public class DeathSaver {
         try {
             Path outputFile = Paths.get(path);
             if (!Files.exists(outputFile.getParent()))
-                Files.createDirectory(outputFile.getParent());
+                Files.createDirectories(outputFile.getParent());
 
             List<String> lines = new ArrayList<>();
             lines.add("rule;support;confidence;lift;conviction");
@@ -57,15 +57,16 @@ public class DeathSaver {
         }
     }
 
-    public static void saveLog(String path, double minSup, double maxFreq) {
+    public static void saveLog(String path, double minSup, double maxFreq, String additional) {
         try {
             Path outputFile = Paths.get(path);
             if (!Files.exists(outputFile.getParent()))
-                Files.createDirectory(outputFile.getParent());
+                Files.createDirectories(outputFile.getParent());
 
             List<String> lines = new ArrayList<>();
             lines.add(String.format("maxFreq: %s",maxFreq));
             lines.add(String.format("minSup: %s",minSup));
+            lines.add(additional);
 
             Files.write(outputFile, lines, Charset.forName("UTF-8"));
         }catch (Exception e){
