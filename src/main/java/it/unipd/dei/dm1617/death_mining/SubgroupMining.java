@@ -57,7 +57,7 @@ public class SubgroupMining {
                 .mapToPair(item -> new Tuple2<>(item, 1))
                 .reduceByKey((a, b) -> a + b)
                 .filter(item -> Boolean.valueOf((1.0*item._2())/bCount.getValue()>maxFreq))
-                .map(item -> item._1())
+                .map(Tuple2::_1)
                 .collect();
 
         System.out.println("Too frequent items: "+outputs);
@@ -90,8 +90,8 @@ public class SubgroupMining {
     public static void main(String[] args) {
 
         double sampleProbability = 1;
-        double minSup = 0.1;
-        double maxFreq = 0.7;
+        double minSup = 0.05;
+        double maxFreq = 0.5;
 
         SparkConf sparkConf = new SparkConf(true).setAppName("Death Mining");
         JavaSparkContext sc = new JavaSparkContext(sparkConf);
