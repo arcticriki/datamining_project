@@ -57,13 +57,15 @@ public class DeathSaver {
         }
     }
 
-    public static void saveLog(String path, double minSup, double maxFreq, String additional) {
+
+    public static void saveLog(String path, double sampleProbability, double minSup, double maxFreq, String additional) {
         try {
             Path outputFile = Paths.get(path);
             if (!Files.exists(outputFile.getParent()))
                 Files.createDirectories(outputFile.getParent());
 
             List<String> lines = new ArrayList<>();
+            lines.add(String.format("sampleProbability: %s",sampleProbability));
             lines.add(String.format("maxFreq: %s",maxFreq));
             lines.add(String.format("minSup: %s",minSup));
             lines.add(additional);
@@ -73,4 +75,9 @@ public class DeathSaver {
             e.printStackTrace();
         }
     }
+
+    public static void saveLog(String path, double sampleProbability, double minSup) {
+        saveLog(path, sampleProbability, minSup, 1, "");
+    }
+
 }

@@ -39,5 +39,6 @@ public class testAlternateConviction {
 
         DeathSaver.saveItemsets(outputdir+"/freq-itemsets", rddFreqItemAndSupport);
         DeathSaver.saveRules(outputdir+"/rules", rddResult);
+        DeathSaver.saveLog(outputdir+"/log",sampleProbability, minSup);
     }
 }
