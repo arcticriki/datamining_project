@@ -10,14 +10,24 @@ import java.util.*;
 /**
  * Created by tonca on 26/05/17.
  *
- * Classe per analizzare sottogruppi (es. Maschi, Femmine, Vecchi, Neri, Suicidi, cose così insomma... )
+ * This class lets us analyze single subgroups in the dataset depending on a specified values
+ * (e.g Male, Female, Old, Black, Suicides and so on...)
  *
- * Per selezionare le classi da isolare bisogna passare per linea di comando in ordine:
- * - il nome della colonna (es. Sex, "Binned Age")
- * - il valore (es. M, Adult)
- *
+ * The subgroups are specified in a map in the following code (subgroups)
  */
 public class SubgroupMining {
+
+    private static final Map<String, List<String>> subgroups;
+    // It can take some time to compute a lot of subgroups together,
+    // Comment some of the lines below for a shorter analysis
+    static {
+        Map<String, List<String>> tmp = new HashMap<>();
+        tmp.put("Sex", Arrays.asList("M", "F"));
+        tmp.put("Binned Age", Arrays.asList("Baby", "Child", "Teenager", "Adult", "Old"));
+        tmp.put("RaceRecode3", Arrays.asList("White", "Black", "Races other than White or Black"));
+        tmp.put("Death Category", Arrays.asList("Homicide", "Suicide", "Accident"));
+        subgroups = Collections.unmodifiableMap(tmp);
+    }
 
     public static void singleGroupMining(JavaSparkContext sc,
                                          JavaRDD<List<Property>> transactions,
@@ -62,7 +72,7 @@ public class SubgroupMining {
         String outputdir = new SimpleDateFormat("yyyyMMdd-HHmmss").format(new Date());
         System.out.println("[saving results] Ouput path: " + outputdir);
 
-        DeathSaver.saveLog(subgroupdir+outputdir+"/log", minSup, maxFreq, topFrequent.toString());
+        DeathSaver.saveLog(subgroupdir+outputdir+"/log", 1, minSup, maxFreq, topFrequent.toString());
         DeathSaver.saveItemsets(subgroupdir+outputdir+"/freq-itemsets", rddFreqItemAndSupport);
         DeathSaver.saveRules(subgroupdir+outputdir+"/rules", rddResult);
 
@@ -71,8 +81,8 @@ public class SubgroupMining {
     public static void main(String[] args) {
 
         double sampleProbability = 1;
-        double minSup = 0.05;
-        double maxFreq = 0.7;
+        double minSup = 0.01;
+        double maxFreq = 0.1;
 
         SparkConf sparkConf = new SparkConf(true).setAppName("Death Mining");
         JavaSparkContext sc = new JavaSparkContext(sparkConf);
@@ -82,16 +92,6 @@ public class SubgroupMining {
         // import data
         System.out.println("[read dataset] Sampling with probability " + sampleProbability + " and importing data");
         JavaRDD<List<Property>> transactions = Preprocessing.dataImport(sc, filename, sampleProbability);
-
-        
-        Map<String, List<String>> subgroups = new HashMap<>();
-        // It can take some time to compute a lot of subgroups together,
-        // Comment some of the lines below for a shorter analysis
-        subgroups.put("Sex", Arrays.asList("M", "F"));
-        subgroups.put("Binned Age", Arrays.asList("Baby", "Child", "Teenager", "Adult", "Old"));
-        subgroups.put("RaceRecode3", Arrays.asList("White", "Black", "Races other than White or Black"));
-        subgroups.put("Death Category", Arrays.asList("Homicide", "Suicide", "Accident"));
-
 
         for(Map.Entry<String, List<String>> entry : subgroups.entrySet())
         {
