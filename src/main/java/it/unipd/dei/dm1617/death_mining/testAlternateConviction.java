@@ -17,7 +17,8 @@ public class testAlternateConviction {
     public static void main(String[] args) {
 
         double sampleProbability = 0.1;
-        double minSup = 0.2;
+        double minSup = 0.001;
+        double maxFreq = 1;
 
         SparkConf sparkConf = new SparkConf(true).setAppName("Death Mining");
         JavaSparkContext sc = new JavaSparkContext(sparkConf);
@@ -30,6 +31,7 @@ public class testAlternateConviction {
 
         // mine frequent itemsets and association rules
         DeathMiner dm = new DeathMiner(sc, transactions);
+        List<Property> topFrequent = dm.filterFrequentItemsets(maxFreq);
         JavaPairRDD<List<Property>, Double> rddFreqItemAndSupport = dm.mineFrequentItemsets(minSup);
         JavaRDD<ExtendedRule> rddResult = dm.mineAssociationRules();
 
@@ -39,6 +41,6 @@ public class testAlternateConviction {
 
         DeathSaver.saveItemsets(outputdir+"/freq-itemsets", rddFreqItemAndSupport);
         DeathSaver.saveRules(outputdir+"/rules", rddResult);
-        DeathSaver.saveLog(outputdir+"/log",sampleProbability, minSup);
+        DeathSaver.saveLog(outputdir+"/log",sampleProbability, minSup,maxFreq,topFrequent.toString());
     }
 }

@@ -22,10 +22,10 @@ public class SubgroupMining {
     // Comment some of the lines below for a shorter analysis
     static {
         Map<String, List<String>> tmp = new HashMap<>();
-        tmp.put("Sex", Arrays.asList("M", "F"));
-        tmp.put("Binned Age", Arrays.asList("Baby", "Child", "Teenager", "Adult", "Old"));
+        //tmp.put("Sex", Arrays.asList("M", "F"));
+        //tmp.put("Binned Age", Arrays.asList("Baby", "Child", "Teenager", "Adult", "Old"));
         tmp.put("RaceRecode3", Arrays.asList("White", "Black", "Races other than White or Black"));
-        tmp.put("Death Category", Arrays.asList("Homicide", "Suicide", "Accident"));
+        //tmp.put("Death Category", Arrays.asList("Homicide", "Suicide", "Accident"));
         subgroups = Collections.unmodifiableMap(tmp);
     }
 
@@ -81,8 +81,8 @@ public class SubgroupMining {
     public static void main(String[] args) {
 
         double sampleProbability = 1;
-        double minSup = 0.01;
-        double maxFreq = 0.1;
+        double minSup = 0.001;
+        double maxFreq = 0.01;
 
         SparkConf sparkConf = new SparkConf(true).setAppName("Death Mining");
         JavaSparkContext sc = new JavaSparkContext(sparkConf);

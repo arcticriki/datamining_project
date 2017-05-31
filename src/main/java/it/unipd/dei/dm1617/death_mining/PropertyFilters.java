@@ -46,9 +46,12 @@ public class PropertyFilters {
     //a-priori knowledge fo the dataset.
     private static final String[] uselessColumns = {
             "Id",
+            "ResidentStatus",
             "Education1989Revision",
             "Education2003Revision",
             "EducationReportingFlag",
+            "MonthOfDeath",
+            //"Sex",
             "AgeType",
             "Age",
             "AgeSubstitutionFlag",
@@ -56,19 +59,29 @@ public class PropertyFilters {
             "AgeRecode27",
             "AgeRecode12",
             "InfantAgeRecode22",
+            //"PlaceOfDeathAndDecedentsStatus",
+            //"MaritalStatus",
+            "DayOfWeekOfDeath",
             "CurrentDataYear",
+            //"InjuryAtWork",
             "MannerOfDeath",
+            "MethodOfDisposition",
+            "Autopsy",
+            "ActivityCode",
+            //"PlaceOfInjury",
             "Icd10Code",
             "CauseRecode358",
             "CauseRecode113",
             "InfantCauseRecode130",
-            "CauseRecode39",
+            //"CauseRecode39",
+            "Death Category",
             "NumberOfEntityAxisConditions",
             "NumberOfRecordAxisConditions",
             "Race",
             "BridgedRaceFlag",
             "RaceImputationFlag",
-            "RaceRecode5",
+            "RaceRecode3",
+            //"RaceRecode5",
             "HispanicOrigin",
             "HispanicOriginRaceRecode"
     };
@@ -204,7 +217,7 @@ public class PropertyFilters {
     //This constant array stores all the columns that need a binning process
     private static final String[] binningColumns = {
             "AgeRecode27",
-            "CauseRecode39",
+            "CauseRecode39X",
             "Education1989Revision",
             "Education2003Revision",
             "Autopsy"
