@@ -16,8 +16,8 @@ import java.util.List;
 public class testAlternateConviction {
     public static void main(String[] args) {
 
-        double sampleProbability = 0.1;
-        double minSup = 0.001;
+        double sampleProbability = 1;
+        double minSup = 0.005;
         double maxFreq = 1;
 
         SparkConf sparkConf = new SparkConf(true).setAppName("Death Mining");
@@ -41,6 +41,14 @@ public class testAlternateConviction {
 
         DeathSaver.saveItemsets(outputdir+"/freq-itemsets", rddFreqItemAndSupport);
         DeathSaver.saveRules(outputdir+"/rules", rddResult);
-        DeathSaver.saveLog(outputdir+"/log",sampleProbability, minSup,maxFreq,topFrequent.toString());
+
+        // Listing the columns used in the analysis for logging purposes
+        List<String> columns = transactions.sample(false,0.01)
+                .flatMap(itemset -> itemset.iterator())
+                .map(item -> item._1())
+                .distinct()
+                .collect();
+
+        DeathSaver.saveLog(outputdir+"/log",sampleProbability, minSup,maxFreq,"Used columns: "+columns.toString());
     }
 }
