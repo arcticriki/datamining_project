@@ -107,6 +107,7 @@ public class Analytics {
             Path file = Paths.get(dirName+colList._1()+"_stats.csv");
 
             try {
+                System.out.println("Saving results in " + dirName + file.getFileName());
                 Files.write(file, colList._2(), Charset.forName("UTF-8"));
             }
             catch (IOException e) {

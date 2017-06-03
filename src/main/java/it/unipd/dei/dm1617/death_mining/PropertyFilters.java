@@ -94,7 +94,7 @@ public class PropertyFilters {
             new Couple("ActivityCode", new String[] {"99", "Not applicable", "During unspecified activity"}),
             new Couple("Autopsy", new String[] {"n", "U"}),
             new Couple("DayOfTheWeekOfDeath", new String[] {"Unknown"}),
-            new Couple("InjuryAtWork", new String[] {"U"}),
+            new Couple("InjuryAtWork", new String[] {"U", "N"}),
             new Couple("MannerOfDeath", new String[] {"Not specified"}),
             new Couple("MaritalStatus", new String[] {"Marital Status unknown"}),
             new Couple("MethodOfDisposition", new String[] {"Other", "null", "Unknown"}),

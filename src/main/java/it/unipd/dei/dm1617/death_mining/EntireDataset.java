@@ -13,12 +13,19 @@ import java.util.List;
  * Created by gianluca on 22/05/2017.
  *
  */
-public class testAlternateConviction {
+public class EntireDataset {
     public static void main(String[] args) {
 
         double sampleProbability = 1;
-        double minSup = 0.005;
+        double minSup = 0.1;
         double maxFreq = 1;
+
+
+        if (args.length == 3){
+            minSup = Double.parseDouble(args[0]);
+            maxFreq = Double.parseDouble(args[1]);
+            sampleProbability = Double.parseDouble(args[2]);
+        }
 
         SparkConf sparkConf = new SparkConf(true).setAppName("Death Mining");
         JavaSparkContext sc = new JavaSparkContext(sparkConf);

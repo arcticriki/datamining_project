@@ -81,7 +81,7 @@ public class SubgroupMining {
 
         DeathSaver.saveLog(subgroupdir+outputdir+"/log", 1, minSup, maxFreq, "Used columns: "+columns.toString());
         DeathSaver.saveItemsets(subgroupdir+outputdir+"/freq-itemsets", rddFreqItemAndSupport);
-        DeathSaver.saveRules(subgroupdir+outputdir+"/rules", rddResult);
+        DeathSaver.saveRules(subgroupdir+outputdir+"/rules", rddResult.sortBy(ExtendedRule::getLift, false, sc.defaultParallelism()));
 
     }
 
@@ -90,6 +90,12 @@ public class SubgroupMining {
         double sampleProbability = 1;
         double minSup = 0.005;
         double maxFreq = 1;
+
+        if (args.length == 3){
+            minSup = Double.parseDouble(args[0]);
+            maxFreq = Double.parseDouble(args[1]);
+            sampleProbability = Double.parseDouble(args[2]);
+        }
 
         SparkConf sparkConf = new SparkConf(true).setAppName("Death Mining");
         JavaSparkContext sc = new JavaSparkContext(sparkConf);

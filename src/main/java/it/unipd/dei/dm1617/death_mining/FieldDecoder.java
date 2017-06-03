@@ -36,7 +36,7 @@ public class FieldDecoder implements Serializable {
             columns = new ArrayList<>(Arrays.asList(colNames));
         }
         catch (IOException e) {
-            e.printStackTrace();
+            //e.printStackTrace();
             return;
         }
 
@@ -57,7 +57,7 @@ public class FieldDecoder implements Serializable {
                 colMap.put(i, map);
             }
             catch (IOException e) {
-                System.err.println(e);
+                //System.err.println(e);
                 //e.printStackTrace();
             }
         }

@@ -94,10 +94,8 @@ public class DeathMiner {
                 new Tuple2<>(item.javaItems(), item.freq()*1.0/tc));
 
         // compute association rules with minConf = 0: filtering is done at a later stage
-        JavaRDD<AssociationRules.Rule<Property>> rules = model.generateAssociationRules(0).toJavaRDD();
-
         // compute extra metrics
-        JavaRDD<ExtendedRule> rddResult = rules
+        JavaRDD<ExtendedRule> rddResult =  model.generateAssociationRules(0).toJavaRDD()
                 .mapToPair(r -> new Tuple2<>(r.javaConsequent(), r))
                 .join(rddFreqItemAndSupport)
                 .mapToPair(i -> new Tuple2<>(i._2._1, i._2._2)) // <Rule, YSupport>
@@ -118,7 +116,7 @@ public class DeathMiner {
                 });
 
         long timeRuleMining = System.currentTimeMillis();
-        System.out.println("[association rules] Number of mined rules: " + rules.count());
+        System.out.println("[association rules] Number of mined rules: " + rddResult.count());
         System.out.println("[association rules] Elapsed time: " + ((timeRuleMining-timeStart)/1000.0));
 
         return rddResult;
