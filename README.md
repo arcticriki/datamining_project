@@ -11,7 +11,6 @@ https://www.kaggle.com/cdc/mortality
 - Java 8
 - `sed` command
 - `unzip` command
-have the Java JDK installed on your system.
 
 ### Prepare dataset
 After downloading the [dataset](https://www.kaggle.com/cdc/mortality) and
