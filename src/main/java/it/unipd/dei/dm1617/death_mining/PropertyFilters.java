@@ -73,8 +73,8 @@ public class PropertyFilters {
             "CauseRecode358",
             "CauseRecode113",
             "InfantCauseRecode130",
-            //"CauseRecode39",
-            "Death Category",
+            "CauseRecode39",
+            //"Death Category",
             "NumberOfEntityAxisConditions",
             "NumberOfRecordAxisConditions",
             "Race",
@@ -217,7 +217,7 @@ public class PropertyFilters {
     //This constant array stores all the columns that need a binning process
     private static final String[] binningColumns = {
             "AgeRecode27",
-            "CauseRecode39X",
+            "CauseRecode39",
             "Education1989Revision",
             "Education2003Revision",
             "Autopsy"
