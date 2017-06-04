@@ -55,3 +55,10 @@ As before, you can pass the number of cores to use as a paramter, e.g.
 ```
 ./runners/analytics.sh 8
 ```
+
+### Visualization
+In the `visualization` folder there are some python scripts using the [plotly](https://plot.ly/python/) library, which let us create interactive plots.
+
+Some samples here:
+ - [Plotting of rules about the whole dataset](https://plot.ly/~arcticriki/9/)
+ - [Subgroup comparison (Male and Female)](https://plot.ly/~tonca/23/sex/)
