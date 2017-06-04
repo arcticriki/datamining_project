@@ -8,6 +8,7 @@ https://www.kaggle.com/cdc/mortality
 
 ## Requirements
 
+- Linux based operating system (tested on Ubuntu 16.04 LTS)
 - Java 8
 - `sed` command
 - `unzip` command
@@ -29,6 +30,14 @@ If you want to mine the entire dataset just call the following command
 ```
 If no arguments are passed, the code will run on a single core, with the default
 parameters for `minsup`, `maxfreq` and `sampleProbability` .
+
+The `maxfreq` parameter is used to remove features that are present in a
+fraction of the dataset bigger than `maxFreq`, while `sampleProbability`
+ controls the probability that any given transaction is included in the
+ reduced dataset: `sampleProbability = 1` assures that the entire dataset
+ is processed.
+
+
 
 The first argument is always the number of cores you want to use
 ```
