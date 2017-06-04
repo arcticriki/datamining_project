@@ -56,6 +56,8 @@ public class EntireDataset {
                 .distinct()
                 .collect();
 
-        DeathSaver.saveLog(outputdir+"/log",sampleProbability, minSup,maxFreq,"Used columns: "+columns.toString());
+        DeathSaver.saveLog(outputdir+"/log",sampleProbability, minSup,maxFreq,String.format("Used columns: %s\nToo Frequent items: %s",
+                columns.toString(),
+                topFrequent.toString()));
     }
 }
